@@ -1,9 +1,9 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "com.pawjwp.worldcreation.mixin",
+  "package": "com.pawjwp.worldpresets.mixin",
   "compatibilityLevel": "JAVA_17",
-  "refmap": "worldcreation.refmap.json",
+  "refmap": "worldpresets.refmap.json",
   "mixins": [
   ],
   "client": [
