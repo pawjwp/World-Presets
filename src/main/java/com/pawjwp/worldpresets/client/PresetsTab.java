@@ -38,6 +38,11 @@ public class PresetsTab implements Tab
     @Override
     public void doLayout(ScreenRectangle area)
     {
-        this.list.setBounds(area.left(), area.top(), area.width(), area.height());
+        int top = area.top() + 8;
+        // Try to recreate the vanilla math for calculating the footer position to avoid overlapping it.
+        // Can't be set statically because vanilla snaps to an even-numbered Y coordinate.
+        int bottom = Math.min(area.bottom(), Mth.roundToward(this.screen.height - 36 - 2, 2));
+        // Full tab width, the list is centered within it
+        this.list.setBounds(area.left(), top, area.width(), bottom - top);
     }
 }
