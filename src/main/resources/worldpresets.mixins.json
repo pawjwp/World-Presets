@@ -6,7 +6,8 @@
   "refmap": "worldpresets.refmap.json",
   "mixins": [
     "PlayerListMixin",
-    "ServerPlayerAccessor"
+    "ServerPlayerAccessor",
+    "ServerPlayerMixin"
   ],
   "client": [
     "CreateWorldScreenMixin"

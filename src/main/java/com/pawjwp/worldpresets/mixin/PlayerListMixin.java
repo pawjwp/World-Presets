@@ -1,13 +1,12 @@
 package com.pawjwp.worldpresets.mixin;
 
-import com.pawjwp.worldpresets.WorldPresets;
-import com.pawjwp.worldpresets.preset.CreationPreset;
-import com.pawjwp.worldpresets.world.PendingWorldSetup;
-import net.minecraft.core.registries.Registries;
+import com.pawjwp.worldpresets.world.RespawnTracker;
+import com.pawjwp.worldpresets.world.WorldSetupData;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.level.Level;
@@ -18,6 +17,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(PlayerList.class)
@@ -51,16 +51,10 @@ public abstract class PlayerListMixin
     {
         this.worldpresets$newPlayerRedirected = false;
         if (!this.worldpresets$newPlayer) return dimension;
-        CreationPreset preset = PendingWorldSetup.consume();
-        if (preset == null || preset.spawnDimension() == null) return dimension;
-        ResourceKey<Level> target = ResourceKey.create(Registries.DIMENSION, preset.spawnDimension());
-        if (this.server.getLevel(target) == null)
-        {
-            WorldPresets.LOGGER.warn("Preset spawn dimension {} does not exist, using {}", preset.spawnDimension(), dimension.location());
-            return dimension;
-        }
+        WorldSetupData data = WorldSetupData.get(this.server);
+        if (data == null || this.server.getLevel(data.spawnDimension) == null) return dimension;
         this.worldpresets$newPlayerRedirected = true;
-        return target;
+        return data.spawnDimension;
     }
 
     /**
@@ -75,5 +69,16 @@ public abstract class PlayerListMixin
             this.worldpresets$newPlayerRedirected = false;
             ((ServerPlayerAccessor) player).worldpresets$fudgeSpawnLocation(player.serverLevel());
         }
+    }
+
+    /**
+     * Replaces the dimension that respawn() falls back to when the player has no bed or respawn anchor.
+     */
+    @Redirect(method = "respawn",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;overworld()Lnet/minecraft/server/level/ServerLevel;"))
+    private ServerLevel worldpresets$respawnFallback(MinecraftServer server, ServerPlayer player, boolean keepEverything)
+    {
+        ServerLevel level = RespawnTracker.resolveRespawnLevel(player, server);
+        return level != null ? level : server.overworld();
     }
 }
