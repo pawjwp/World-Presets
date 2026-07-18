@@ -1,5 +1,7 @@
 package com.pawjwp.worldpresets.preset;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -7,7 +9,9 @@ import net.minecraft.util.GsonHelper;
 import net.minecraft.world.Difficulty;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -38,7 +42,8 @@ public record CreationPreset(
 
         // Special settings
         @Nullable ResourceLocation spawnDimension,
-        RespawnMode respawnMode
+        RespawnMode respawnMode,
+        List<StructureSpec> structures
 ) {
 
     public enum GameMode
@@ -65,6 +70,10 @@ public record CreationPreset(
             return valueOf(name.toUpperCase(Locale.ROOT));
         }
     }
+
+    /** A structure to generate near world spawn */
+    public record StructureSpec(ResourceLocation structure, int offsetX, int offsetZ) {}
+
     public static CreationPreset parse(String id, JsonObject json)
     {
         Component title = text(json, "title", "translate_title", id);
@@ -111,12 +120,27 @@ public record CreationPreset(
             if (spawn.has("respawn_mode")) respawnMode = RespawnMode.byName(GsonHelper.getAsString(spawn, "respawn_mode"));
         }
 
+        List<StructureSpec> structures = new ArrayList<>();
+        for (JsonElement element : GsonHelper.getAsJsonArray(json, "structures", new JsonArray()))
+        {
+            JsonObject entry = GsonHelper.convertToJsonObject(element, "structure entry");
+            int offsetX = 0;
+            int offsetZ = 0;
+            if (entry.has("offset"))
+            {
+                JsonArray offset = GsonHelper.getAsJsonArray(entry, "offset");
+                offsetX = offset.get(0).getAsInt();
+                offsetZ = offset.get(1).getAsInt();
+            }
+            structures.add(new StructureSpec(ResourceLocation.parse(GsonHelper.getAsString(entry, "structure")), offsetX, offsetZ));
+        }
+
         return new CreationPreset(
                 id, title, description, hidden, order,               // Meta information
                 worldName, gameMode, difficulty, allowCheats,        // Game tab
                 worldType, seed,                                     // World tab (not including generate structures/bonus chest toggles)
                 Map.copyOf(gameRules),                               // More tab (not including data packs/experiments)
-                spawnDimension, respawnMode                          // Special settings
+                spawnDimension, respawnMode, List.copyOf(structures) // Special settings
         );
     }
 

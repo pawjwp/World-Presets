@@ -33,6 +33,11 @@ public final class WorldSetupEvents
     @Nullable
     private static CreationPreset deferredPreset;
 
+    /**
+     * Places the preset's structures at the spawn point before vanilla generates it.
+     * Defers to onServerStarting if the preset uses a custom spawn dimension.
+     * Fires once when the new world picks its spawn.
+     */
     @SubscribeEvent
     public static void onCreateSpawnPosition(LevelEvent.CreateSpawnPosition event)
     {
@@ -44,10 +49,12 @@ public final class WorldSetupEvents
             deferredPreset = preset;
             return;
         }
+        // Same area vanilla is about to choose
+        StructurePlacer.placeAll(level, preset.structures(), spawnAnchor(level));
     }
 
     /**
-     * Places the world's spawn point in its configured dimension.
+     * Places the world's spawn point and structures in the configured dimension.
      */
     @SubscribeEvent
     public static void onServerStarting(ServerStartingEvent event)
@@ -63,12 +70,14 @@ public final class WorldSetupEvents
         {
             WorldPresets.LOGGER.error("Preset spawn dimension {} does not exist, falling back to the overworld", preset.spawnDimension());
             BlockPos spawn = new BlockPos(levelData.getXSpawn(), levelData.getYSpawn(), levelData.getZSpawn());
+            StructurePlacer.placeAll(server.overworld(), preset.structures(), spawn);
             BlockPos safe = settleSpawn(server.overworld(), spawn);
             if (safe != null) levelData.setSpawn(safe, 0.0F);
             return;
         }
 
         BlockPos anchor = spawnAnchor(level);
+        StructurePlacer.placeAll(level, preset.structures(), anchor);
         BlockPos spawn = settleSpawn(level, anchor);
         // World spawn coordinates are saved in the overworld's level data and are used for all dimensions
         levelData.setSpawn(spawn != null ? spawn : anchor, 0.0F);
