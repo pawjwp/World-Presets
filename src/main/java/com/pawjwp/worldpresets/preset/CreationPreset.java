@@ -35,8 +35,10 @@ public record CreationPreset(
 
         // More tab (not including data packs/experiments)
         Map<String, String> gameRules,
+
         // Special settings
-        @Nullable ResourceLocation spawnDimension
+        @Nullable ResourceLocation spawnDimension,
+        RespawnMode respawnMode
 ) {
 
     public enum GameMode
@@ -46,6 +48,23 @@ public record CreationPreset(
         CREATIVE
     }
 
+    /** Respawn behavior when a preset has a custom spawn dimension and the player has no set spawn */
+    public enum RespawnMode
+    {
+        // Respawns go to the overworld
+        VANILLA,
+        // Respawns go to the last dimension where the player's spawnpoint was set
+        LAST_DIMENSION,
+        // Respawns go to the last dimension where the player's spawnpoint was set, excluding respawn anchors
+        LAST_DIMENSION_NO_ANCHORS,
+        // Respawns go to the spawn dimension
+        ALWAYS_SPAWN_DIMENSION;
+
+        public static RespawnMode byName(String name)
+        {
+            return valueOf(name.toUpperCase(Locale.ROOT));
+        }
+    }
     public static CreationPreset parse(String id, JsonObject json)
     {
         Component title = text(json, "title", "translate_title", id);
@@ -84,10 +103,12 @@ public record CreationPreset(
         }
 
         ResourceLocation spawnDimension = null;
+        RespawnMode respawnMode = RespawnMode.LAST_DIMENSION;
         if (json.has("spawn"))
         {
             JsonObject spawn = GsonHelper.getAsJsonObject(json, "spawn");
             if (spawn.has("dimension")) spawnDimension = ResourceLocation.parse(GsonHelper.getAsString(spawn, "dimension"));
+            if (spawn.has("respawn_mode")) respawnMode = RespawnMode.byName(GsonHelper.getAsString(spawn, "respawn_mode"));
         }
 
         return new CreationPreset(
@@ -95,7 +116,7 @@ public record CreationPreset(
                 worldName, gameMode, difficulty, allowCheats,        // Game tab
                 worldType, seed,                                     // World tab (not including generate structures/bonus chest toggles)
                 Map.copyOf(gameRules),                               // More tab (not including data packs/experiments)
-                spawnDimension                                       // Special settings
+                spawnDimension, respawnMode                          // Special settings
         );
     }
 
