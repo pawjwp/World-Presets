@@ -5,6 +5,8 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "worldpresets.refmap.json",
   "mixins": [
+    "PlayerListMixin",
+    "ServerPlayerAccessor"
   ],
   "client": [
     "CreateWorldScreenMixin"

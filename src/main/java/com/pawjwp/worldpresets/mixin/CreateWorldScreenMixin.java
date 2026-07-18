@@ -5,6 +5,7 @@ import com.pawjwp.worldpresets.client.PresetScreenAccess;
 import com.pawjwp.worldpresets.client.PresetsTab;
 import com.pawjwp.worldpresets.preset.CreationPreset;
 import com.pawjwp.worldpresets.preset.PresetManager;
+import com.pawjwp.worldpresets.world.PendingWorldSetup;
 import com.mojang.serialization.Dynamic;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
@@ -52,6 +53,13 @@ public abstract class CreateWorldScreenMixin extends Screen implements PresetScr
     protected CreateWorldScreenMixin(Component title)
     {
         super(title);
+    }
+
+    /** Sends the selected preset to the server that is about to start when the Create button is pressed. */
+    @Inject(method = "onCreate", at = @At("HEAD"))
+    private void worldpresets$captureSetup(CallbackInfo ci)
+    {
+        PendingWorldSetup.set(this.worldpresets$selected);
     }
 
     /** Adds the Presets tab to the start of the Create World screen (when a valid presets is registered). */
