@@ -34,7 +34,9 @@ public record CreationPreset(
         @Nullable String seed,
 
         // More tab (not including data packs/experiments)
-        Map<String, String> gameRules
+        Map<String, String> gameRules,
+        // Special settings
+        @Nullable ResourceLocation spawnDimension
 ) {
 
     public enum GameMode
@@ -81,12 +83,19 @@ public record CreationPreset(
             }
         }
 
+        ResourceLocation spawnDimension = null;
+        if (json.has("spawn"))
+        {
+            JsonObject spawn = GsonHelper.getAsJsonObject(json, "spawn");
+            if (spawn.has("dimension")) spawnDimension = ResourceLocation.parse(GsonHelper.getAsString(spawn, "dimension"));
+        }
 
         return new CreationPreset(
                 id, title, description, hidden, order,               // Meta information
                 worldName, gameMode, difficulty, allowCheats,        // Game tab
                 worldType, seed,                                     // World tab (not including generate structures/bonus chest toggles)
-                Map.copyOf(gameRules)                               // More tab (not including data packs/experiments)
+                Map.copyOf(gameRules),                               // More tab (not including data packs/experiments)
+                spawnDimension                                       // Special settings
         );
     }
 
