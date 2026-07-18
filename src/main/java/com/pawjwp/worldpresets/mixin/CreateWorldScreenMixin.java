@@ -24,7 +24,9 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import javax.annotation.Nullable;
 import java.util.HashSet;
@@ -40,6 +42,12 @@ public abstract class CreateWorldScreenMixin extends Screen implements PresetScr
     @Unique
     @Nullable
     private CreationPreset worldpresets$selected;
+
+    @Unique
+    private double worldpresets$listScroll;
+
+    @Unique
+    private boolean worldpresets$restoreFocus;
 
     protected CreateWorldScreenMixin(Component title)
     {
@@ -82,6 +90,32 @@ public abstract class CreateWorldScreenMixin extends Screen implements PresetScr
     public CreationPreset worldpresets$selectedPreset()
     {
         return this.worldpresets$selected;
+    }
+
+    @Override
+    public double worldpresets$listScroll()
+    {
+        return this.worldpresets$listScroll;
+    }
+
+    @Override
+    public void worldpresets$setListScroll(double scroll)
+    {
+        this.worldpresets$listScroll = scroll;
+    }
+
+    @Override
+    public void worldpresets$requestFocusRestore()
+    {
+        this.worldpresets$restoreFocus = true;
+    }
+
+    @Override
+    public boolean worldpresets$consumeFocusRestore()
+    {
+        boolean restore = this.worldpresets$restoreFocus;
+        this.worldpresets$restoreFocus = false;
+        return restore;
     }
 
     @Unique

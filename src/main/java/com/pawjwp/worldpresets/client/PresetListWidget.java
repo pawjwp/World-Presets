@@ -63,6 +63,8 @@ public class PresetListWidget extends AbstractWidget implements ContainerEventHa
         this.height = height;
         this.list.updateSize(width, height, y, y + height);
         this.list.setLeftPos(x);
+        this.list.restoreScroll();
+        this.list.restoreFocus(this);
     }
 
     @Override
@@ -101,6 +103,45 @@ public class PresetListWidget extends AbstractWidget implements ContainerEventHa
             child.setFocused(true);
         this.focusedChild = child;
     }
+
+    @Override
+    public void setFocused(boolean focused) {
+        // Pass the focus state to the list without resetting which item is selected
+        if (this.focusedChild != null)
+            this.focusedChild.setFocused(focused);
+    }
+
+    @Override
+    public boolean isFocused() {
+        return ContainerEventHandler.super.isFocused();
+    }
+
+    @Nullable
+    @Override
+    public ComponentPath nextFocusPath(FocusNavigationEvent event) {
+        // Send focus navigation into the list itself
+        if (!this.active || !this.visible)
+            return null;
+        return ContainerEventHandler.super.nextFocusPath(event);
+    }
+
+    // Send mouse events to the list
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        return ContainerEventHandler.super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        return ContainerEventHandler.super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        return ContainerEventHandler.super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
     @Override
     protected void updateWidgetNarration(NarrationElementOutput output) {
         this.list.updateNarration(output);
@@ -158,6 +199,21 @@ public class PresetListWidget extends AbstractWidget implements ContainerEventHa
             int right = left + rowWidth;
             graphics.fill(left, top, right, selBottom, outer);
             graphics.fill(left + 1, top + 1, right - 1, selBottom - 1, inner);
+        }
+
+        // Restores the scroll position saved before the last rebuild, like vanilla does when a screen reopens
+        void restoreScroll() {
+            this.setScrollAmount(((PresetScreenAccess) this.screen).worldpresets$listScroll());
+        }
+
+        // Moves focus back to the selected row after choosing a preset rebuilds the screen
+        void restoreFocus(PresetListWidget wrapper) {
+            Entry selected = this.getSelected();
+            if (selected == null || !((PresetScreenAccess) this.screen).worldpresets$consumeFocusRestore())
+                return;
+            this.screen.setFocused(wrapper);
+            wrapper.setFocused(this);
+            this.setFocused(selected);
         }
 
         @Override
@@ -242,11 +298,23 @@ public class PresetListWidget extends AbstractWidget implements ContainerEventHa
                 return true;
             }
 
+            // Applies this row's preset when Enter or Space is pressed while it's focused.
+            @Override
+            public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+                if (!CommonInputs.selected(keyCode))
+                    return false;
+                this.apply();
+                return true;
+            }
+
             // Plays the click sound, saves the scroll position and focus, then applies the preset, which rebuilds the screen.
             void apply() {
                 Minecraft.getInstance().getSoundManager()
                         .play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                // All widgets are rebuilt after applying, so the scroll position and focus are saved first, and the apply is deferred until the current input is handled.
                 PresetScreenAccess access = (PresetScreenAccess) ListView.this.screen;
+                access.worldpresets$setListScroll(ListView.this.getScrollAmount());
+                access.worldpresets$requestFocusRestore();
                 Minecraft.getInstance().tell(() -> access.worldpresets$applyPreset(this.preset));
             }
 
