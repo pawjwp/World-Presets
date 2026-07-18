@@ -16,17 +16,24 @@ import java.util.Map;
  * Every field is optional, a preset only changes the defined options.
  */
 public record CreationPreset(
+        // Meta information
         String id,
         Component title,
         Component description,
         boolean hidden,
         int order,
+
+        // Game tab
         @Nullable String worldName,
         @Nullable GameMode gameMode,
         @Nullable Difficulty difficulty,
         @Nullable Boolean allowCheats,
+
+        // World tab (not including generate structures/bonus chest toggles)
         @Nullable ResourceLocation worldType,
         @Nullable String seed,
+
+        // More tab (not including data packs/experiments)
         Map<String, String> gameRules
 ) {
 
@@ -75,7 +82,12 @@ public record CreationPreset(
         }
 
 
-        return new CreationPreset(id, title, description, hidden, order, worldName, gameMode, difficulty, allowCheats, worldType, seed, Map.copyOf(gameRules));
+        return new CreationPreset(
+                id, title, description, hidden, order,               // Meta information
+                worldName, gameMode, difficulty, allowCheats,        // Game tab
+                worldType, seed,                                     // World tab (not including generate structures/bonus chest toggles)
+                Map.copyOf(gameRules)                               // More tab (not including data packs/experiments)
+        );
     }
 
     private static Component text(JsonObject json, String key, String translateKey, String fallback)
