@@ -54,11 +54,12 @@ public abstract class CreateWorldScreenMixin extends Screen implements PresetScr
         super(title);
     }
 
-    /** Adds the Presets tab to the start of the Create World screen. */
+    /** Adds the Presets tab to the start of the Create World screen (when a valid presets is registered). */
     @ModifyArg(method = "init",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/tabs/TabNavigationBar$Builder;addTabs([Lnet/minecraft/client/gui/components/tabs/Tab;)Lnet/minecraft/client/gui/components/tabs/TabNavigationBar$Builder;"))
     private Tab[] worldpresets$addPresetsTab(Tab[] tabs)
     {
+        if (PresetManager.getPresets().isEmpty()) return tabs;
         Tab[] withPresets = new Tab[tabs.length + 1];
         withPresets[0] = new PresetsTab((CreateWorldScreen) (Object) this);
         System.arraycopy(tabs, 0, withPresets, 1, tabs.length);
