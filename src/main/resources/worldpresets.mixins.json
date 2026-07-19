@@ -6,6 +6,7 @@
   "refmap": "worldpresets.refmap.json",
   "mixins": [
     "ChunkGeneratorMixin",
+    "MinecraftServerMixin",
     "PlayerListMixin",
     "ServerPlayerAccessor",
     "ServerPlayerMixin",

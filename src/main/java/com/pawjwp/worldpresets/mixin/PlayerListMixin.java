@@ -2,6 +2,8 @@ package com.pawjwp.worldpresets.mixin;
 
 import com.pawjwp.worldpresets.world.RespawnTracker;
 import com.pawjwp.worldpresets.world.WorldSetupData;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.resources.ResourceKey;
@@ -52,7 +54,7 @@ public abstract class PlayerListMixin
         this.worldpresets$newPlayerRedirected = false;
         if (!this.worldpresets$newPlayer) return dimension;
         WorldSetupData data = WorldSetupData.get(this.server);
-        if (data == null || this.server.getLevel(data.spawnDimension) == null) return dimension;
+        if (data == null || data.spawnDimension == Level.OVERWORLD || this.server.getLevel(data.spawnDimension) == null) return dimension;
         this.worldpresets$newPlayerRedirected = true;
         return data.spawnDimension;
     }
@@ -67,6 +69,7 @@ public abstract class PlayerListMixin
         if (this.worldpresets$newPlayerRedirected)
         {
             this.worldpresets$newPlayerRedirected = false;
+            worldpresets$loadSpawnChunk(player.serverLevel());
             ((ServerPlayerAccessor) player).worldpresets$fudgeSpawnLocation(player.serverLevel());
         }
     }
@@ -79,6 +82,18 @@ public abstract class PlayerListMixin
     private ServerLevel worldpresets$respawnFallback(MinecraftServer server, ServerPlayer player, boolean keepEverything)
     {
         ServerLevel level = RespawnTracker.resolveRespawnLevel(player, server);
-        return level != null ? level : server.overworld();
+        if (level == null) return server.overworld();
+        worldpresets$loadSpawnChunk(level);
+        return level;
+    }
+
+    /**
+     * Loads the chunk at this dimension's spawn point
+     */
+    @Unique
+    private static void worldpresets$loadSpawnChunk(ServerLevel level)
+    {
+        BlockPos spawn = level.getSharedSpawnPos();
+        level.getChunk(SectionPos.blockToSectionCoord(spawn.getX()), SectionPos.blockToSectionCoord(spawn.getZ()));
     }
 }

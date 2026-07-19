@@ -3,19 +3,20 @@ package com.pawjwp.worldpresets.world;
 import com.pawjwp.worldpresets.WorldPresets;
 import com.pawjwp.worldpresets.preset.CreationPreset;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.MinecraftServer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.PlayerRespawnLogic;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.storage.ServerLevelData;
 import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -24,18 +25,18 @@ import javax.annotation.Nullable;
 
 /**
  * Applies the selected preset to the created world.
- * Structures are anchored before vanilla chooses the spawn block to avoid spawning clipped in a wall.=
+ * Structures are anchored before vanilla chooses the spawn block to avoid spawning clipped in a wall.
  */
 @Mod.EventBusSubscriber(modid = WorldPresets.MODID)
 public final class WorldSetupEvents
 {
-    /** Holds the preset until server starts, for presets whose spawn dimension doesn't exist yet. */
+    /** Holds the preset until its spawn dimension loads, which happens after the overworld picks its spawn. */
     @Nullable
     private static CreationPreset deferredPreset;
 
     /**
      * Places the preset's structures at the spawn point before vanilla generates it.
-     * Defers to onServerStarting if the preset uses a spawn dimension other than the overworld.
+     * Defers to onLevelLoad if the preset uses a spawn dimension other than the overworld.
      * Fires once when the new world picks its spawn.
      */
     @SubscribeEvent
@@ -44,45 +45,42 @@ public final class WorldSetupEvents
         if (!(event.getLevel() instanceof ServerLevel level) || level.dimension() != Level.OVERWORLD) return;
         CreationPreset preset = PendingWorldSetup.consume();
         if (preset == null) return;
-        if (preset.spawnDimension() != null && !preset.spawnDimension().equals(Level.OVERWORLD.location()))
+        ResourceLocation dimension = preset.spawnDimension();
+        if (dimension != null && !level.registryAccess().registryOrThrow(Registries.LEVEL_STEM).containsKey(dimension))
+        {
+            WorldPresets.LOGGER.error("Preset spawn dimension {} does not exist, falling back to the overworld", dimension);
+            dimension = Level.OVERWORLD.location();
+        }
+        if (dimension != null && !dimension.equals(Level.OVERWORLD.location()))
         {
             deferredPreset = preset;
             return;
         }
-        if (preset.spawnDimension() != null) WorldSetupData.create(level.getServer(), Level.OVERWORLD, preset.respawnMode());
+        // An overworld spawn dimension only changes respawn behavior, spawn is left to vanilla
+        if (dimension != null) WorldSetupData.create(level.getServer(), Level.OVERWORLD, preset.respawnMode());
         // Same area vanilla is about to choose
         StructurePlacer.placeAll(level, preset.structures(), spawnAnchor(level));
     }
 
     /**
-     * Places the world's spawn point and structures in the configured dimension.
+     * Places the world's spawn point and structures in the preset's spawn dimension once it loads.
+     * Runs while the server is creating levels and before the start region generates.
+     * MinecraftServerMixin prepares and keeps loaded the chunks around the spawn set here.
      */
     @SubscribeEvent
-    public static void onServerStarting(ServerStartingEvent event)
+    public static void onLevelLoad(LevelEvent.Load event)
     {
         CreationPreset preset = deferredPreset;
-        if (preset == null) return;
+        if (preset == null || !(event.getLevel() instanceof ServerLevel level) || !level.dimension().location().equals(preset.spawnDimension())) return;
         deferredPreset = null;
-
-        MinecraftServer server = event.getServer();
-        ServerLevel level = server.getLevel(ResourceKey.create(Registries.DIMENSION, preset.spawnDimension()));
-        ServerLevelData levelData = (ServerLevelData) server.getWorldData().overworldData();
-        if (level == null)
-        {
-            WorldPresets.LOGGER.error("Preset spawn dimension {} does not exist, falling back to the overworld", preset.spawnDimension());
-            BlockPos spawn = new BlockPos(levelData.getXSpawn(), levelData.getYSpawn(), levelData.getZSpawn());
-            StructurePlacer.placeAll(server.overworld(), preset.structures(), spawn);
-            BlockPos safe = settleSpawn(server.overworld(), spawn);
-            if (safe != null) levelData.setSpawn(safe, 0.0F);
-            return;
-        }
 
         BlockPos anchor = spawnAnchor(level);
         StructurePlacer.placeAll(level, preset.structures(), anchor);
         BlockPos spawn = settleSpawn(level, anchor);
         // World spawn coordinates are saved in the overworld's level data and are used for all dimensions
+        ServerLevelData levelData = (ServerLevelData) level.getServer().getWorldData().overworldData();
         levelData.setSpawn(spawn != null ? spawn : anchor, 0.0F);
-        WorldSetupData.create(server, level.dimension(), preset.respawnMode());
+        WorldSetupData.create(level.getServer(), level.dimension(), preset.respawnMode());
     }
 
     @SubscribeEvent
@@ -112,6 +110,7 @@ public final class WorldSetupEvents
     @Nullable
     private static BlockPos settleSpawn(ServerLevel level, BlockPos anchor)
     {
+        boolean ceiling = level.dimensionType().hasCeiling();
         ChunkPos center = new ChunkPos(anchor);
         int x = 0;
         int z = 0;
@@ -121,7 +120,8 @@ public final class WorldSetupEvents
         {
             if (x >= -5 && x <= 5 && z >= -5 && z <= 5)
             {
-                BlockPos safe = PlayerRespawnLogic.getSpawnPosInChunk(level, new ChunkPos(center.x + x, center.z + z));
+                ChunkPos chunkPos = new ChunkPos(center.x + x, center.z + z);
+                BlockPos safe = ceiling ? ceilingSpawnPosInChunk(level, chunkPos) : PlayerRespawnLogic.getSpawnPosInChunk(level, chunkPos);
                 if (safe != null) return safe;
             }
             if (x == z || x < 0 && x == -z || x > 0 && x == 1 - z)
@@ -136,6 +136,33 @@ public final class WorldSetupEvents
         return verticalScan(level, anchor);
     }
 
+    /**
+     * Finds a valid spawn location in a given chunk for dimensions with a ceiling
+     */
+    @Nullable
+    private static BlockPos ceilingSpawnPosInChunk(ServerLevel level, ChunkPos chunkPos)
+    {
+        // Each column is scanned down from the generator's spawn height, looking for solid ground with two air blocks above it.
+        LevelChunk chunk = level.getChunk(chunkPos.x, chunkPos.z);
+        int top = level.getChunkSource().getGenerator().getSpawnHeight(level);
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (int x = chunkPos.getMinBlockX(); x <= chunkPos.getMaxBlockX(); ++x)
+        {
+            for (int z = chunkPos.getMinBlockZ(); z <= chunkPos.getMaxBlockZ(); ++z)
+            {
+                for (int y = top; y > level.getMinBuildHeight(); --y)
+                {
+                    if (chunk.getBlockState(pos.set(x, y, z)).isAir() && chunk.getBlockState(pos.set(x, y + 1, z)).isAir()
+                            && Block.isFaceFull(chunk.getBlockState(pos.set(x, y - 1, z)).getCollisionShape(level, pos), Direction.UP))
+                    {
+                        return new BlockPos(x, y, z);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     /** Scans the spawn coordinate's column for solid ground with two air blocks above it. */
     @Nullable
     private static BlockPos verticalScan(ServerLevel level, BlockPos anchor)
@@ -145,7 +172,7 @@ public final class WorldSetupEvents
         for (int y = top; y > level.getMinBuildHeight(); --y)
         {
             if (level.getBlockState(pos.setY(y)).isAir() && level.getBlockState(pos.setY(y + 1)).isAir()
-                    && !level.getBlockState(pos.setY(y - 1)).isAir())
+                    && Block.isFaceFull(level.getBlockState(pos.setY(y - 1)).getCollisionShape(level, pos), Direction.UP))
             {
                 return new BlockPos(anchor.getX(), y, anchor.getZ());
             }
