@@ -66,16 +66,23 @@ public final class StructurePlacer
         if (starts.isEmpty()) return;
 
         PENDING.put(level.dimension(), pending);
-        // Generate chunks to let ChunkGeneratorMixin use the starts in the STRUCTURE_STARTS stage
-        for (StructureStart start : starts)
+        try
         {
-            BoundingBox box = start.getBoundingBox();
-            ChunkPos min = new ChunkPos(SectionPos.blockToSectionCoord(box.minX()), SectionPos.blockToSectionCoord(box.minZ()));
-            ChunkPos max = new ChunkPos(SectionPos.blockToSectionCoord(box.maxX()), SectionPos.blockToSectionCoord(box.maxZ()));
-            ChunkPos.rangeClosed(min, max).forEach(chunkPos -> level.getChunk(chunkPos.x, chunkPos.z));
-            WorldPresets.LOGGER.info("Generated starting structure {} at {}", start.getStructure(), start.getChunkPos().getWorldPosition());
+            // Generate chunks to let ChunkGeneratorMixin use the starts in the STRUCTURE_STARTS stage
+            for (StructureStart start : starts)
+            {
+                BoundingBox box = start.getBoundingBox();
+                ChunkPos min = new ChunkPos(SectionPos.blockToSectionCoord(box.minX()), SectionPos.blockToSectionCoord(box.minZ()));
+                ChunkPos max = new ChunkPos(SectionPos.blockToSectionCoord(box.maxX()), SectionPos.blockToSectionCoord(box.maxZ()));
+                ChunkPos.rangeClosed(min, max).forEach(chunkPos -> level.getChunk(chunkPos.x, chunkPos.z));
+                WorldPresets.LOGGER.info("Generated starting structure {} at {}", start.getStructure(), start.getChunkPos().getWorldPosition());
+            }
         }
-        PENDING.remove(level.dimension());
+        finally
+        {
+            // Clear the pending preset's starts to avoid lingering into other worlds
+            PENDING.remove(level.dimension());
+        }
     }
 
     /** Passes this chunk's pending structure starts to its structure manager. */
