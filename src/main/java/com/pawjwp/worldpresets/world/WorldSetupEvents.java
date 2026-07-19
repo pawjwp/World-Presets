@@ -35,7 +35,7 @@ public final class WorldSetupEvents
 
     /**
      * Places the preset's structures at the spawn point before vanilla generates it.
-     * Defers to onServerStarting if the preset uses a custom spawn dimension.
+     * Defers to onServerStarting if the preset uses a spawn dimension other than the overworld.
      * Fires once when the new world picks its spawn.
      */
     @SubscribeEvent
@@ -44,11 +44,12 @@ public final class WorldSetupEvents
         if (!(event.getLevel() instanceof ServerLevel level) || level.dimension() != Level.OVERWORLD) return;
         CreationPreset preset = PendingWorldSetup.consume();
         if (preset == null) return;
-        if (preset.spawnDimension() != null)
+        if (preset.spawnDimension() != null && !preset.spawnDimension().equals(Level.OVERWORLD.location()))
         {
             deferredPreset = preset;
             return;
         }
+        if (preset.spawnDimension() != null) WorldSetupData.create(level.getServer(), Level.OVERWORLD, preset.respawnMode());
         // Same area vanilla is about to choose
         StructurePlacer.placeAll(level, preset.structures(), spawnAnchor(level));
     }

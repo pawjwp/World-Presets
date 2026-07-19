@@ -7,6 +7,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.Difficulty;
+import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -99,7 +100,7 @@ public record CreationPreset(
             }
             if (world.has("allow_cheats")) allowCheats = GsonHelper.getAsBoolean(world, "allow_cheats");
             if (world.has("world_type")) worldType = ResourceLocation.parse(GsonHelper.getAsString(world, "world_type"));
-            if (world.has("seed")) seed = world.get("seed").getAsString();
+            if (world.has("seed")) seed = GsonHelper.getAsString(world, "seed");
         }
 
         Map<String, String> gameRules = new LinkedHashMap<>();
@@ -116,7 +117,8 @@ public record CreationPreset(
         if (json.has("spawn"))
         {
             JsonObject spawn = GsonHelper.getAsJsonObject(json, "spawn");
-            if (spawn.has("dimension")) spawnDimension = ResourceLocation.parse(GsonHelper.getAsString(spawn, "dimension"));
+            // The dimension defaults to the overworld so respawn_mode can be set on its own
+            spawnDimension = spawn.has("dimension") ? ResourceLocation.parse(GsonHelper.getAsString(spawn, "dimension")) : Level.OVERWORLD.location();
             if (spawn.has("respawn_mode")) respawnMode = RespawnMode.byName(GsonHelper.getAsString(spawn, "respawn_mode"));
         }
 
