@@ -140,9 +140,12 @@ public abstract class CreateWorldScreenMixin extends Screen implements PresetScr
         this.uiState.setWorldType(new WorldCreationUiState.WorldTypeEntry(holder.get()));
     }
 
-    /** Vanilla's default game rules with the preset's overrides applied. */
+    /** Collection of vanilla gamerules */
     @Unique
-    private static GameRules worldpresets$buildGameRules(CreationPreset preset)
+    private static final Set<String> worldpresets$KNOWN_RULES = worldpresets$collectKnownRules();
+
+    @Unique
+    private static Set<String> worldpresets$collectKnownRules()
     {
         Set<String> known = new HashSet<>();
         GameRules.visitGameRuleTypes(new GameRules.GameRuleTypeVisitor()
@@ -153,10 +156,17 @@ public abstract class CreateWorldScreenMixin extends Screen implements PresetScr
                 known.add(key.getId());
             }
         });
+        return known;
+    }
+
+    /** Vanilla default game rules with the preset's overrides applied. */
+    @Unique
+    private static GameRules worldpresets$buildGameRules(CreationPreset preset)
+    {
         CompoundTag tag = new CompoundTag();
         for (var entry : preset.gameRules().entrySet())
         {
-            if (known.contains(entry.getKey())) tag.putString(entry.getKey(), entry.getValue());
+            if (worldpresets$KNOWN_RULES.contains(entry.getKey())) tag.putString(entry.getKey(), entry.getValue());
             else WorldPresets.LOGGER.info("Ignoring unknown gamerule '{}' in preset {}", entry.getKey(), preset.id());
         }
         return new GameRules(new Dynamic<>(NbtOps.INSTANCE, tag));
