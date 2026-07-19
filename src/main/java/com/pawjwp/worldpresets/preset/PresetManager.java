@@ -77,7 +77,7 @@ public final class PresetManager
             // A picture for the preset can be placed in this folder with a matching name.
             // Images will be cropped to a 3:2 aspect ratio, the recommended image size is 768x512.
             //
-            // All settings but the title are optional.
+            // All settings are optional.
             {
                 hidden: true,
                 title: "Example Preset",

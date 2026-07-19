@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Sends a preset's StructureStarts to world generation while
+ * Injects a preset's pending structure starts as chunks reach the STRUCTURE_STARTS stage.
  */
 @Mixin(ChunkGenerator.class)
 public abstract class ChunkGeneratorMixin

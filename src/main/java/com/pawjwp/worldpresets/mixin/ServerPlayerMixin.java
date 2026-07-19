@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import javax.annotation.Nullable;
 
 /**
- * Chooses the respawn dimension from the world's respawn mode
+ * Reports the respawn dimension from the world's respawn mode
  */
 @Mixin(ServerPlayer.class)
 public abstract class ServerPlayerMixin
