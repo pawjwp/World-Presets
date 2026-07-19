@@ -1,5 +1,6 @@
 package com.pawjwp.worldpresets.world;
 
+import com.pawjwp.worldpresets.WorldPresets;
 import com.pawjwp.worldpresets.preset.CreationPreset.RespawnMode;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -49,6 +50,7 @@ public class WorldSetupData extends SavedData
         }
         catch (IllegalArgumentException e)
         {
+            WorldPresets.LOGGER.error("Unknown respawn mode '{}' in saved world data, using {}", tag.getString("RespawnMode"), RespawnMode.LAST_DIMENSION);
             mode = RespawnMode.LAST_DIMENSION;
         }
         return new WorldSetupData(ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(tag.getString("SpawnDimension"))), mode);

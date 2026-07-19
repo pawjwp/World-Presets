@@ -129,6 +129,7 @@ public record CreationPreset(
             if (entry.has("offset"))
             {
                 JsonArray offset = GsonHelper.getAsJsonArray(entry, "offset");
+                if (offset.size() != 2) throw new IllegalArgumentException("Structure offset must be two numbers [x, z], got " + offset);
                 offsetX = offset.get(0).getAsInt();
                 offsetZ = offset.get(1).getAsInt();
             }

@@ -23,7 +23,6 @@ import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.FormattedText;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 
@@ -282,11 +281,8 @@ public class PresetListWidget extends AbstractWidget implements ContainerEventHa
             }
 
             private FormattedCharSequence truncate(Component text, int maxWidth) {
-                if (this.font.width(text) <= maxWidth)
-                    return text.getVisualOrderText();
-                FormattedText ellipsized = FormattedText.composite(
-                        this.font.substrByWidth(text, maxWidth - this.font.width("...")), FormattedText.of("..."));
-                return Language.getInstance().getVisualOrder(ellipsized);
+                // Forge's ellipsize appends "..." only when the text is too wide, and guards the case where "..." alone is wider than maxWidth.
+                return Language.getInstance().getVisualOrder(this.font.ellipsize(text, maxWidth));
             }
 
             @Override
