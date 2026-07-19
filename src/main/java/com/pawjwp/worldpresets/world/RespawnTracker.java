@@ -13,6 +13,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.event.entity.player.PlayerSetSpawnEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -28,10 +29,10 @@ public final class RespawnTracker
     private static final String LAST_SPAWN = "LastSpawnDimension";
     private static final String LAST_BED = "LastBedDimension";
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onSetSpawn(PlayerSetSpawnEvent event)
     {
-        if (!(event.getEntity() instanceof ServerPlayer player) || event.getNewSpawn() == null) return;
+        if (event.isCanceled() || !(event.getEntity() instanceof ServerPlayer player) || event.getNewSpawn() == null) return;
         CompoundTag persisted = player.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
         CompoundTag ours = persisted.getCompound(WorldPresets.MODID);
         String dimension = event.getSpawnLevel().location().toString();
