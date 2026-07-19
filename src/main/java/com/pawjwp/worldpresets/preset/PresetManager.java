@@ -37,6 +37,11 @@ public final class PresetManager
         List<CreationPreset> loadedPresets = new ArrayList<>();
         try
         {
+            if (!Files.isDirectory(dir))
+            {
+                Files.createDirectories(dir);
+                Files.writeString(dir.resolve("example.json5"), EXAMPLE);
+            }
             try (Stream<Path> files = Files.list(dir))
             {
                 for (Path file : files.toList())
@@ -64,4 +69,59 @@ public final class PresetManager
         loadedPresets.sort(Comparator.comparingInt(CreationPreset::order).thenComparing(CreationPreset::id));
         presets = loadedPresets;
     }
+
+    // Gson parsing to allow comments and unquoted keys
+    private static final String EXAMPLE = """
+            // Example world creation preset. Will not be shown in game if "hidden" is set to true.
+            //
+            // A picture for the preset can be placed in this folder with a matching name.
+            // Images will be cropped to a 3:2 aspect ratio, the recommended image size is 768x512.
+            //
+            // All settings but the title are optional.
+            {
+                hidden: true,
+                title: "Example Preset",
+                description: "A brief description, up to 5 lines long.\\nUse \\\\n for a new line.\\nSupports \\u00A7f\\u00A7oformatting codes\\u00A7r. Find more information at minecraft.wiki/w/Formatting_codes",
+                // Set these to true to treat the title and/or description as translation keys instead of exact text.
+                translate_title: false,
+                translate_description: false,
+                // Lower numbers sort first in the preset list.
+                order: 0,
+
+                // Fills options on the World and Game tabs. The player can still edit them.
+                world: {
+                    name: "Example Preset World",
+                    gamemode: "survival",           // survival | hardcore | creative
+                    difficulty: "normal",           // peaceful | easy | normal | hard
+                    allow_cheats: false,
+                    world_type: "minecraft:normal", // any world preset id like minecraft:flat or minecraft:large_biomes
+                    seed: "01189998819991197253"    // takes any text or number, max of 32 characters
+                },
+
+                // Overrides default values in the Game Rules screen.
+                gamerules: {
+                    keepInventory: true,
+                    mobGriefing: false
+                },
+
+                // Overrides where players spawn and respawn.
+                spawn: {
+                    dimension: "minecraft:overworld",
+                    // How respawning works when the player has no usable bed or respawn anchor:
+                    // vanilla: respawns go to the overworld
+                    // last_dimension: respawns go to the last dimension where the spawnpoint was set (default)
+                    // last_dimension_no_anchors: respawns go to the last dimension where the spawnpoint was set, excluding respawn anchors
+                    // always_spawn_dimension: respawns go to the spawn dimension
+                    respawn_mode: "last_dimension"
+                },
+
+                // Structures to generate upon creating the world.
+                // Goes through the whole vanilla structure generation procedure including terrain adaptation and jigsaw placement.
+                // An offset can be set [x, z] blocks away from the world spawn point.
+                structures: [
+                    { structure: "minecraft:village_plains", offset: [-64, -176]  },
+                    { structure: "minecraft:pillager_outpost", offset: [-128, -64] }
+                ]
+            }
+            """;
 }
