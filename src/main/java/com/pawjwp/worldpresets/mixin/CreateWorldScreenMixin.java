@@ -48,7 +48,7 @@ public abstract class CreateWorldScreenMixin extends Screen implements PresetScr
     private double worldpresets$listScroll;
 
     @Unique
-    private boolean worldpresets$restoreFocus;
+    private boolean worldpresets$restore;
 
     protected CreateWorldScreenMixin(Component title)
     {
@@ -114,16 +114,16 @@ public abstract class CreateWorldScreenMixin extends Screen implements PresetScr
     }
 
     @Override
-    public void worldpresets$requestFocusRestore()
+    public void worldpresets$requestRestore()
     {
-        this.worldpresets$restoreFocus = true;
+        this.worldpresets$restore = true;
     }
 
     @Override
-    public boolean worldpresets$consumeFocusRestore()
+    public boolean worldpresets$consumeRestore()
     {
-        boolean restore = this.worldpresets$restoreFocus;
-        this.worldpresets$restoreFocus = false;
+        boolean restore = this.worldpresets$restore;
+        this.worldpresets$restore = false;
         return restore;
     }
 

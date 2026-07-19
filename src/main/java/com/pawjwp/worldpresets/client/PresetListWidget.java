@@ -62,8 +62,7 @@ public class PresetListWidget extends AbstractWidget implements ContainerEventHa
         this.height = height;
         this.list.updateSize(width, height, y, y + height);
         this.list.setLeftPos(x);
-        this.list.restoreScroll();
-        this.list.restoreFocus(this);
+        this.list.restoreAfterApply(this);
     }
 
     @Override
@@ -200,16 +199,13 @@ public class PresetListWidget extends AbstractWidget implements ContainerEventHa
             graphics.fill(left + 1, top + 1, right - 1, selBottom - 1, inner);
         }
 
-        // Restores the scroll position saved before the last rebuild, like vanilla does when a screen reopens
-        void restoreScroll() {
+        // Restores the scroll position and focus saved when a preset was applied
+        // Only used with apply(), window changes don't save/restore
+        void restoreAfterApply(PresetListWidget wrapper) {
+            if (!((PresetScreenAccess) this.screen).worldpresets$consumeRestore()) return;
             this.setScrollAmount(((PresetScreenAccess) this.screen).worldpresets$listScroll());
-        }
-
-        // Moves focus back to the selected row after choosing a preset rebuilds the screen
-        void restoreFocus(PresetListWidget wrapper) {
             Entry selected = this.getSelected();
-            if (selected == null || !((PresetScreenAccess) this.screen).worldpresets$consumeFocusRestore())
-                return;
+            if (selected == null) return;
             this.screen.setFocused(wrapper);
             wrapper.setFocused(this);
             this.setFocused(selected);
@@ -310,7 +306,7 @@ public class PresetListWidget extends AbstractWidget implements ContainerEventHa
                 // All widgets are rebuilt after applying, so the scroll position and focus are saved first, and the apply is deferred until the current input is handled.
                 PresetScreenAccess access = (PresetScreenAccess) ListView.this.screen;
                 access.worldpresets$setListScroll(ListView.this.getScrollAmount());
-                access.worldpresets$requestFocusRestore();
+                access.worldpresets$requestRestore();
                 Minecraft.getInstance().tell(() -> access.worldpresets$applyPreset(this.preset));
             }
 

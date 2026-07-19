@@ -17,9 +17,9 @@ public interface PresetScreenAccess
 
     void worldpresets$setListScroll(double scroll);
 
-    /** Requests that the preset list re-focus the selected item. */
-    void worldpresets$requestFocusRestore();
+    /** Requests that the preset list restore its saved scroll position and focus after the next rebuild. */
+    void worldpresets$requestRestore();
 
-    /** Returns true the first time it is called after a focus restore, then false until the next restore. */
-    boolean worldpresets$consumeFocusRestore();
+    /** Returns true the first time it is called after a restore request, then false until the next request. */
+    boolean worldpresets$consumeRestore();
 }
