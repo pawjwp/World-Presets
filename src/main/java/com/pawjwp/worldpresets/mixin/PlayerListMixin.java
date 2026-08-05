@@ -1,5 +1,7 @@
 package com.pawjwp.worldpresets.mixin;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.pawjwp.worldpresets.world.RespawnTracker;
 import com.pawjwp.worldpresets.world.WorldSetupData;
 import net.minecraft.core.BlockPos;
@@ -19,7 +21,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(PlayerList.class)
@@ -77,12 +78,12 @@ public abstract class PlayerListMixin
     /**
      * Replaces the dimension that respawn() falls back to when the player has no bed or respawn anchor.
      */
-    @Redirect(method = "respawn",
+    @WrapOperation(method = "respawn",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;overworld()Lnet/minecraft/server/level/ServerLevel;"))
-    private ServerLevel worldpresets$respawnFallback(MinecraftServer server, ServerPlayer player, boolean keepEverything)
+    private ServerLevel worldpresets$respawnFallback(MinecraftServer server, Operation<ServerLevel> original, ServerPlayer player, boolean keepEverything)
     {
         ServerLevel level = RespawnTracker.resolveRespawnLevel(player, server);
-        if (level == null) return server.overworld();
+        if (level == null) return original.call(server);
         worldpresets$loadSpawnChunk(level);
         return level;
     }
