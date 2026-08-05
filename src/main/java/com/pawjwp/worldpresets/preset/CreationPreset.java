@@ -44,6 +44,7 @@ public record CreationPreset(
         // Special settings
         @Nullable ResourceLocation spawnDimension,
         RespawnMode respawnMode,
+        SpawnChunkLoading keepLoaded,
         List<StructureSpec> structures
 ) {
 
@@ -67,6 +68,20 @@ public record CreationPreset(
         ALWAYS_SPAWN_DIMENSION;
 
         public static RespawnMode byName(String name)
+        {
+            return valueOf(name.toUpperCase(Locale.ROOT));
+        }
+    }
+
+    /** Which dimension's spawn chunks stay loaded when a preset has a custom spawn dimension */
+    public enum SpawnChunkLoading
+    {
+        // Only the spawn dimension's spawn chunks stay loaded
+        SPAWN_DIMENSION,
+        // Both the spawn dimension's and the overworld's normal spawn chunks stay loaded
+        BOTH;
+
+        public static SpawnChunkLoading byName(String name)
         {
             return valueOf(name.toUpperCase(Locale.ROOT));
         }
@@ -114,12 +129,14 @@ public record CreationPreset(
 
         ResourceLocation spawnDimension = null;
         RespawnMode respawnMode = RespawnMode.LAST_DIMENSION;
+        SpawnChunkLoading keepLoaded = SpawnChunkLoading.SPAWN_DIMENSION;
         if (json.has("spawn"))
         {
             JsonObject spawn = GsonHelper.getAsJsonObject(json, "spawn");
             // The dimension defaults to the overworld so respawn_mode can be set on its own
             spawnDimension = spawn.has("dimension") ? ResourceLocation.parse(GsonHelper.getAsString(spawn, "dimension")) : Level.OVERWORLD.location();
             if (spawn.has("respawn_mode")) respawnMode = RespawnMode.byName(GsonHelper.getAsString(spawn, "respawn_mode"));
+            if (spawn.has("keep_loaded")) keepLoaded = SpawnChunkLoading.byName(GsonHelper.getAsString(spawn, "keep_loaded"));
         }
 
         List<StructureSpec> structures = new ArrayList<>();
@@ -143,7 +160,7 @@ public record CreationPreset(
                 worldName, gameMode, difficulty, allowCheats,        // Game tab
                 worldType, seed,                                     // World tab (not including generate structures/bonus chest toggles)
                 Map.copyOf(gameRules),                               // More tab (not including data packs/experiments)
-                spawnDimension, respawnMode, List.copyOf(structures) // Special settings
+                spawnDimension, respawnMode, keepLoaded, List.copyOf(structures) // Special settings
         );
     }
 

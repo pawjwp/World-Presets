@@ -2,8 +2,10 @@ package com.pawjwp.worldpresets.world;
 
 import com.pawjwp.worldpresets.WorldPresets;
 import com.pawjwp.worldpresets.preset.CreationPreset.RespawnMode;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -21,11 +23,15 @@ public class WorldSetupData extends SavedData
 
     public final ResourceKey<Level> spawnDimension;
     public final RespawnMode respawnMode;
+    /** The overworld's original spawn to also keep loaded, null if only the spawn dimension's chunks are loaded. */
+    @Nullable
+    public final BlockPos overworldSpawn;
 
-    private WorldSetupData(ResourceKey<Level> spawnDimension, RespawnMode respawnMode)
+    private WorldSetupData(ResourceKey<Level> spawnDimension, RespawnMode respawnMode, @Nullable BlockPos overworldSpawn)
     {
         this.spawnDimension = spawnDimension;
         this.respawnMode = respawnMode;
+        this.overworldSpawn = overworldSpawn;
     }
 
     @Nullable
@@ -34,9 +40,9 @@ public class WorldSetupData extends SavedData
         return server.overworld().getDataStorage().get(WorldSetupData::load, ID);
     }
 
-    public static void create(MinecraftServer server, ResourceKey<Level> spawnDimension, RespawnMode respawnMode)
+    public static void create(MinecraftServer server, ResourceKey<Level> spawnDimension, RespawnMode respawnMode, @Nullable BlockPos overworldSpawn)
     {
-        WorldSetupData data = new WorldSetupData(spawnDimension, respawnMode);
+        WorldSetupData data = new WorldSetupData(spawnDimension, respawnMode, overworldSpawn);
         data.setDirty();
         server.overworld().getDataStorage().set(ID, data);
     }
@@ -53,7 +59,8 @@ public class WorldSetupData extends SavedData
             WorldPresets.LOGGER.error("Unknown respawn mode '{}' in saved world data, using {}", tag.getString("RespawnMode"), RespawnMode.LAST_DIMENSION);
             mode = RespawnMode.LAST_DIMENSION;
         }
-        return new WorldSetupData(ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(tag.getString("SpawnDimension"))), mode);
+        BlockPos overworldSpawn = tag.contains("OverworldSpawn") ? NbtUtils.readBlockPos(tag.getCompound("OverworldSpawn")) : null;
+        return new WorldSetupData(ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(tag.getString("SpawnDimension"))), mode, overworldSpawn);
     }
 
     @Override
@@ -61,6 +68,7 @@ public class WorldSetupData extends SavedData
     {
         tag.putString("SpawnDimension", this.spawnDimension.location().toString());
         tag.putString("RespawnMode", this.respawnMode.name().toLowerCase(java.util.Locale.ROOT));
+        if (this.overworldSpawn != null) tag.put("OverworldSpawn", NbtUtils.writeBlockPos(this.overworldSpawn));
         return tag;
     }
 }

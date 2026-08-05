@@ -9,7 +9,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.PlayerRespawnLogic;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.util.Mth;
+import net.minecraft.util.Unit;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -17,6 +19,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.storage.ServerLevelData;
 import net.minecraftforge.event.level.LevelEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -57,7 +60,7 @@ public final class WorldSetupEvents
             return;
         }
         // An overworld spawn dimension only changes respawn behavior, spawn is left to vanilla
-        if (dimension != null) WorldSetupData.create(level.getServer(), Level.OVERWORLD, preset.respawnMode());
+        if (dimension != null) WorldSetupData.create(level.getServer(), Level.OVERWORLD, preset.respawnMode(), null);
         // Same area vanilla is about to choose
         StructurePlacer.placeAll(level, preset.structures(), spawnAnchor(level));
     }
@@ -79,8 +82,25 @@ public final class WorldSetupEvents
         BlockPos spawn = settleSpawn(level, anchor);
         // World spawn coordinates are saved in the overworld's level data and are used for all dimensions
         ServerLevelData levelData = (ServerLevelData) level.getServer().getWorldData().overworldData();
+        // When both dimensions are loaded, keep the overworld's spawn before it's overwritten so its chunks can stay loaded too
+        BlockPos overworldSpawn = preset.keepLoaded() == CreationPreset.SpawnChunkLoading.BOTH
+                ? new BlockPos(levelData.getXSpawn(), levelData.getYSpawn(), levelData.getZSpawn())
+                : null;
         levelData.setSpawn(spawn != null ? spawn : anchor, 0.0F);
-        WorldSetupData.create(level.getServer(), level.dimension(), preset.respawnMode());
+        WorldSetupData.create(level.getServer(), level.dimension(), preset.respawnMode(), overworldSpawn);
+    }
+
+    /**
+     * Keeps the overworld's original spawn chunks loaded alongside the spawn dimension when the preset requests both.
+     * The start region is already kept loaded by the redirects in MinecraftServerMixin.
+     */
+    @SubscribeEvent
+    public static void onServerStarted(ServerStartedEvent event)
+    {
+        WorldSetupData data = WorldSetupData.get(event.getServer());
+        if (data == null || data.overworldSpawn == null) return;
+        ServerLevel overworld = event.getServer().overworld();
+        overworld.getChunkSource().addRegionTicket(TicketType.START, new ChunkPos(data.overworldSpawn), 11, Unit.INSTANCE);
     }
 
     @SubscribeEvent

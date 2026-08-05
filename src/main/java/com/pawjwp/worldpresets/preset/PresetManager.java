@@ -112,7 +112,11 @@ public final class PresetManager
                     // last_dimension: respawns go to the last dimension where the spawnpoint was set (default)
                     // last_dimension_no_anchors: respawns go to the last dimension where the spawnpoint was set, excluding respawn anchors
                     // always_spawn_dimension: respawns go to the spawn dimension
-                    respawn_mode: "last_dimension"
+                    respawn_mode: "last_dimension",
+                    // Which spawn chunks stay loaded
+                    // spawn_dimension: only the spawn dimension's, matching how vanilla keeps the overworld's (default)
+                    // both: the spawn dimension and the overworld's chunks
+                    keep_loaded: "spawn_dimension"
                 },
 
                 // Structures to generate upon creating the world.
