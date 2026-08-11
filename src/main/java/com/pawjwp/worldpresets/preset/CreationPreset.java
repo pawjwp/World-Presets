@@ -45,6 +45,7 @@ public record CreationPreset(
         @Nullable ResourceLocation spawnDimension,
         RespawnMode respawnMode,
         SpawnChunkLoading keepLoaded,
+        @Nullable StartPosition startPosition,
         List<StructureSpec> structures
 ) {
 
@@ -84,6 +85,65 @@ public record CreationPreset(
         public static SpawnChunkLoading byName(String name)
         {
             return valueOf(name.toUpperCase(Locale.ROOT));
+        }
+    }
+
+    /** How the set spawn position is converted to the world spawn */
+    public enum Placement
+    {
+        // Place the player at the exact set coordinates, even if that is in a wall or mid-air
+        EXACT,
+        // Place the player at the exact coordinates, clearing a space and adding a floor if needed
+        CLEAR,
+        // Find the nearest safe surface at the coordinates' column (ignores spawn height)
+        FIND_SAFE,
+        // Relocate vanilla's entire spawn climate placement logic around the set coordinate (ignores spawn height)
+        FIND_CLIMATE;
+
+        public static Placement byName(String name)
+        {
+            return valueOf(name.toUpperCase(Locale.ROOT));
+        }
+    }
+
+    /** World spawn override, built from command-style coordinates. Each axis is either absolute or an offset using a "~". */
+    public record StartPosition(Coord x, Coord y, Coord z, Placement placement)
+    {
+        public record Coord(boolean relative, int value)
+        {
+            public int resolve(int base)
+            {
+                return relative ? base + value : value;
+            }
+        }
+
+        public boolean anyRelative()
+        {
+            return x.relative() || y.relative() || z.relative();
+        }
+
+        /** Exact and clear place the player at the precise coordinates and skip the inprecision of vanilla's spawns. */
+        public boolean exact()
+        {
+            return placement == Placement.EXACT || placement == Placement.CLEAR;
+        }
+
+        private static Coord parseCoord(String token)
+        {
+            if (token.startsWith("~"))
+            {
+                String offset = token.substring(1);
+                return new Coord(true, offset.isEmpty() ? 0 : Integer.parseInt(offset));
+            }
+            return new Coord(false, Integer.parseInt(token));
+        }
+
+        public static StartPosition parse(JsonObject json)
+        {
+            String[] tokens = GsonHelper.getAsString(json, "position").trim().split("[\\s,]+");
+            if (tokens.length != 3) throw new IllegalArgumentException("start_position must be three coordinates \"x y z\", got " + tokens.length);
+            Placement placement = json.has("placement") ? Placement.byName(GsonHelper.getAsString(json, "placement")) : Placement.FIND_SAFE;
+            return new StartPosition(parseCoord(tokens[0]), parseCoord(tokens[1]), parseCoord(tokens[2]), placement);
         }
     }
 
@@ -130,14 +190,16 @@ public record CreationPreset(
         ResourceLocation spawnDimension = null;
         RespawnMode respawnMode = RespawnMode.LAST_DIMENSION;
         SpawnChunkLoading keepLoaded = SpawnChunkLoading.SPAWN_DIMENSION;
-        if (json.has("spawn"))
+        if (json.has("dimension"))
         {
-            JsonObject spawn = GsonHelper.getAsJsonObject(json, "spawn");
-            // The dimension defaults to the overworld so respawn_mode can be set on its own
-            spawnDimension = spawn.has("dimension") ? ResourceLocation.parse(GsonHelper.getAsString(spawn, "dimension")) : Level.OVERWORLD.location();
-            if (spawn.has("respawn_mode")) respawnMode = RespawnMode.byName(GsonHelper.getAsString(spawn, "respawn_mode"));
-            if (spawn.has("keep_loaded")) keepLoaded = SpawnChunkLoading.byName(GsonHelper.getAsString(spawn, "keep_loaded"));
+            JsonObject dimension = GsonHelper.getAsJsonObject(json, "dimension");
+            // The dimension id defaults to the overworld so respawn_mode can be set on its own
+            spawnDimension = dimension.has("dimension_id") ? ResourceLocation.parse(GsonHelper.getAsString(dimension, "dimension_id")) : Level.OVERWORLD.location();
+            if (dimension.has("respawn_mode")) respawnMode = RespawnMode.byName(GsonHelper.getAsString(dimension, "respawn_mode"));
+            if (dimension.has("keep_loaded")) keepLoaded = SpawnChunkLoading.byName(GsonHelper.getAsString(dimension, "keep_loaded"));
         }
+
+        StartPosition startPosition = json.has("start_position") ? StartPosition.parse(GsonHelper.getAsJsonObject(json, "start_position")) : null;
 
         List<StructureSpec> structures = new ArrayList<>();
         for (JsonElement element : GsonHelper.getAsJsonArray(json, "structures", new JsonArray()))
@@ -160,7 +222,7 @@ public record CreationPreset(
                 worldName, gameMode, difficulty, allowCheats,        // Game tab
                 worldType, seed,                                     // World tab (not including generate structures/bonus chest toggles)
                 Map.copyOf(gameRules),                               // More tab (not including data packs/experiments)
-                spawnDimension, respawnMode, keepLoaded, List.copyOf(structures) // Special settings
+                spawnDimension, respawnMode, keepLoaded, startPosition, List.copyOf(structures) // Special settings
         );
     }
 

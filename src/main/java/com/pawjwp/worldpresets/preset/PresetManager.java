@@ -104,9 +104,9 @@ public final class PresetManager
                     mobGriefing: false
                 },
 
-                // Overrides where players spawn and respawn.
-                spawn: {
-                    dimension: "minecraft:overworld",
+                // Sets the dimension players spawn and respawn in.
+                dimension: {
+                    dimension_id: "minecraft:overworld",
                     // How respawning works when the player has no usable bed or respawn anchor:
                     // vanilla: respawns go to the overworld
                     // last_dimension: respawns go to the last dimension where the spawnpoint was set (default)
@@ -117,6 +117,20 @@ public final class PresetManager
                     // spawn_dimension: only the spawn dimension's, matching how vanilla keeps the overworld's (default)
                     // both: the spawn dimension and the overworld's chunks
                     keep_loaded: "spawn_dimension"
+                },
+
+                // Overrides the world spawn point.
+                start_position: {
+                    // Coordinates structured like a /tp command, separated by spaces.
+                    // Plain numbers are absolute, relative coordinates are denoted with a tilde (~)
+                    // For example: "49 64 0" will spawn at those exact coordinates, "~49 ~ ~" will shift the normal spawn by 49 blocks instead.
+                    position: "~-128 ~ ~-64",
+                    // Placement mode, determining how the spawn location is placed:
+                    // find_safe:    finds the closest safe spawn position to the specified location (default, always spawns on the surface)
+                    // find_climate: runs vanilla's full climate search around the specified location, which can change the exact position by thousands of blocks
+                    // exact:        the exact coordinates, even if in a wall or mid-air
+                    // clear:        the exact coordinates, clearing space and adding a floor if needed
+                    placement: "find_safe"
                 },
 
                 // Structures to generate upon creating the world.

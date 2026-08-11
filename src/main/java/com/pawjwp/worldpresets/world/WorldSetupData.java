@@ -26,12 +26,15 @@ public class WorldSetupData extends SavedData
     /** The overworld's original spawn to also keep loaded, null if only the spawn dimension's chunks are loaded. */
     @Nullable
     public final BlockPos overworldSpawn;
+    /** True when the start_position uses exact or clear placement, so new players skip vanilla's surface fudge. */
+    public final boolean exactSpawn;
 
-    private WorldSetupData(ResourceKey<Level> spawnDimension, RespawnMode respawnMode, @Nullable BlockPos overworldSpawn)
+    private WorldSetupData(ResourceKey<Level> spawnDimension, RespawnMode respawnMode, @Nullable BlockPos overworldSpawn, boolean exactSpawn)
     {
         this.spawnDimension = spawnDimension;
         this.respawnMode = respawnMode;
         this.overworldSpawn = overworldSpawn;
+        this.exactSpawn = exactSpawn;
     }
 
     @Nullable
@@ -40,9 +43,9 @@ public class WorldSetupData extends SavedData
         return server.overworld().getDataStorage().get(WorldSetupData::load, ID);
     }
 
-    public static void create(MinecraftServer server, ResourceKey<Level> spawnDimension, RespawnMode respawnMode, @Nullable BlockPos overworldSpawn)
+    public static void create(MinecraftServer server, ResourceKey<Level> spawnDimension, RespawnMode respawnMode, @Nullable BlockPos overworldSpawn, boolean exactSpawn)
     {
-        WorldSetupData data = new WorldSetupData(spawnDimension, respawnMode, overworldSpawn);
+        WorldSetupData data = new WorldSetupData(spawnDimension, respawnMode, overworldSpawn, exactSpawn);
         data.setDirty();
         server.overworld().getDataStorage().set(ID, data);
     }
@@ -60,7 +63,7 @@ public class WorldSetupData extends SavedData
             mode = RespawnMode.LAST_DIMENSION;
         }
         BlockPos overworldSpawn = tag.contains("OverworldSpawn") ? NbtUtils.readBlockPos(tag.getCompound("OverworldSpawn")) : null;
-        return new WorldSetupData(ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(tag.getString("SpawnDimension"))), mode, overworldSpawn);
+        return new WorldSetupData(ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(tag.getString("SpawnDimension"))), mode, overworldSpawn, tag.getBoolean("ExactSpawn"));
     }
 
     @Override
@@ -69,6 +72,7 @@ public class WorldSetupData extends SavedData
         tag.putString("SpawnDimension", this.spawnDimension.location().toString());
         tag.putString("RespawnMode", this.respawnMode.name().toLowerCase(java.util.Locale.ROOT));
         if (this.overworldSpawn != null) tag.put("OverworldSpawn", NbtUtils.writeBlockPos(this.overworldSpawn));
+        if (this.exactSpawn) tag.putBoolean("ExactSpawn", true);
         return tag;
     }
 }
