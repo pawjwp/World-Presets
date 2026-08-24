@@ -3,6 +3,11 @@ package com.pawjwp.worldpresets.preset;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.pawjwp.worldpresets.WorldPresets;
+import net.minecraft.SharedConstants;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
@@ -10,6 +15,9 @@ import net.minecraft.world.Difficulty;
 import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -46,7 +54,8 @@ public record CreationPreset(
         RespawnMode respawnMode,
         SpawnChunkLoading keepLoaded,
         @Nullable StartPosition startPosition,
-        List<StructureSpec> structures
+        List<StructureSpec> structures,
+        @Nullable BundledWorld bundledWorld
 ) {
 
     public enum GameMode
@@ -150,6 +159,49 @@ public record CreationPreset(
     /** A structure to generate near world spawn */
     public record StructureSpec(ResourceLocation structure, int offsetX, int offsetZ) {}
 
+    /** A pre-made world that comes bundled with a preset saved to config/worldpresets/worlds */
+    public record BundledWorld(Path worldDir, boolean resetPlayerData, boolean resetWorldState, Prefill prefill)
+    {
+        /** Values read from bundled level.dat to prefill the tabs in the world creation screen */
+        public record Prefill(@Nullable String name, @Nullable Integer gameType, boolean hardcore, @Nullable Difficulty difficulty,
+                              @Nullable Boolean allowCommands, CompoundTag gameRules, @Nullable Long seed) {}
+
+        /** Parses and validates the bundled world, throwing errors if invalid */
+        public static BundledWorld parse(JsonObject json)
+        {
+            String worldFolder = GsonHelper.getAsString(json, "folder");
+            Path worldsDir = PresetManager.worldsDirectory().resolve(worldFolder);
+            if (!Files.isDirectory(worldsDir)) throw new IllegalArgumentException("Bundled world folder not found: " + worldsDir);
+            if (!Files.isRegularFile(worldsDir.resolve("level.dat"))) throw new IllegalArgumentException("Bundled world '" + worldFolder + "' has no level.dat");
+            CompoundTag data;
+            try
+            {
+                data = NbtIo.readCompressed(worldsDir.resolve("level.dat").toFile()).getCompound("Data");
+            }
+            catch (IOException e)
+            {
+                throw new IllegalArgumentException("Bundled world '" + worldFolder + "' has an invalid level.dat", e);
+            }
+            // Reject worlds created on a newer version
+            int currentVersion = SharedConstants.getCurrentVersion().getDataVersion().getVersion();
+            if (data.getInt("DataVersion") > currentVersion)
+                throw new IllegalArgumentException("Bundled world '" + worldFolder + "' was saved in a newer game version (world version is " + data.getInt("DataVersion") + ", this game is " + currentVersion + ")");
+
+            Prefill prefill = new Prefill(
+                    data.contains("LevelName", Tag.TAG_STRING) ? data.getString("LevelName") : null,
+                    data.contains("GameType", Tag.TAG_ANY_NUMERIC) ? data.getInt("GameType") : null,
+                    data.getBoolean("hardcore"),
+                    data.contains("Difficulty", Tag.TAG_ANY_NUMERIC) ? Difficulty.byId(data.getInt("Difficulty")) : null,
+                    data.contains("allowCommands", Tag.TAG_ANY_NUMERIC) ? data.getBoolean("allowCommands") : null,
+                    data.getCompound("GameRules"),
+                    data.getCompound("WorldGenSettings").contains("seed", Tag.TAG_ANY_NUMERIC) ? data.getCompound("WorldGenSettings").getLong("seed") : null);
+            return new BundledWorld(worldsDir,
+                    GsonHelper.getAsBoolean(json, "reset_player_data", true),
+                    GsonHelper.getAsBoolean(json, "reset_world_state", false),
+                    prefill);
+        }
+    }
+
     public static CreationPreset parse(String id, JsonObject json)
     {
         Component title = text(json, "title", "translate_title", id);
@@ -217,12 +269,24 @@ public record CreationPreset(
             structures.add(new StructureSpec(ResourceLocation.parse(GsonHelper.getAsString(entry, "structure")), offsetX, offsetZ));
         }
 
+        BundledWorld bundledWorld = json.has("bundled_world") ? BundledWorld.parse(GsonHelper.getAsJsonObject(json, "bundled_world")) : null;
+        if (bundledWorld != null && (worldType != null || seed != null || spawnDimension != null || startPosition != null || !structures.isEmpty()))
+        {
+            WorldPresets.LOGGER.warn("Preset {} includes a bundled world; its world_type, seed, dimension, start_position, and structures settings are ignored", id);
+            worldType = null;
+            seed = null;
+            spawnDimension = null;
+            startPosition = null;
+            structures = List.of();
+        }
+
         return new CreationPreset(
                 id, title, description, hidden, order,               // Meta information
                 worldName, gameMode, difficulty, allowCheats,        // Game tab
                 worldType, seed,                                     // World tab (not including generate structures/bonus chest toggles)
                 Map.copyOf(gameRules),                               // More tab (not including data packs/experiments)
-                spawnDimension, respawnMode, keepLoaded, startPosition, List.copyOf(structures) // Special settings
+                spawnDimension, respawnMode, keepLoaded, startPosition, List.copyOf(structures), // Special settings
+                bundledWorld
         );
     }
 

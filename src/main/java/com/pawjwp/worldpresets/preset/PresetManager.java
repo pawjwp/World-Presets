@@ -25,7 +25,13 @@ public final class PresetManager
         return FMLPaths.CONFIGDIR.get().resolve(WorldPresets.MODID).resolve("presets");
     }
 
-    //Visible presets, sorted
+    /** The directory where presets' bundled worlds are stored */
+    public static Path worldsDirectory()
+    {
+        return FMLPaths.CONFIGDIR.get().resolve(WorldPresets.MODID).resolve("worlds");
+    }
+
+    // Visible presets, sorted
     public static List<CreationPreset> getPresets()
     {
         return presets;
@@ -42,6 +48,7 @@ public final class PresetManager
                 Files.createDirectories(dir);
                 Files.writeString(dir.resolve("example.json5"), EXAMPLE);
             }
+            Files.createDirectories(worldsDirectory());
             try (Stream<Path> files = Files.list(dir))
             {
                 for (Path file : files.toList())
@@ -103,6 +110,17 @@ public final class PresetManager
                     keepInventory: true,
                     mobGriefing: false
                 },
+
+                // Creates a copy of a pre-made world instead of generating a new one.
+                // To use, place a world save folder into config/worldpresets/worlds and set the "folder" value below to its folder name.
+                // When a bundled world is preset, the world_type, seed, dimension, start_position, and structures configuration is ignored.
+                //bundled_world: {
+                //    folder: "example_world",
+                //    // If true, removes all player data stored with the world (default: true)
+                //    reset_player_data: true,
+                //    // If true, resets world data like time of day, weather, raids, and wandering trader time (default: false)
+                //    reset_world_state: false
+                //},
 
                 // Sets the dimension players spawn and respawn in.
                 dimension: {
