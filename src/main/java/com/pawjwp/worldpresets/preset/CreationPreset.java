@@ -240,13 +240,16 @@ public record CreationPreset(
         }
 
         ResourceLocation spawnDimension = null;
-        RespawnMode respawnMode = RespawnMode.LAST_DIMENSION;
+        // Default to vanilla spawning unless a spawn dimension is set
+        RespawnMode respawnMode = RespawnMode.VANILLA;
         SpawnChunkLoading keepLoaded = SpawnChunkLoading.SPAWN_DIMENSION;
         if (json.has("dimension"))
         {
             JsonObject dimension = GsonHelper.getAsJsonObject(json, "dimension");
             // The dimension id defaults to the overworld so respawn_mode can be set on its own
             spawnDimension = dimension.has("dimension_id") ? ResourceLocation.parse(GsonHelper.getAsString(dimension, "dimension_id")) : Level.OVERWORLD.location();
+            // If a spawn dimension is set, default to last_dimension respawn mode
+            if (dimension.has("dimension_id")) respawnMode = RespawnMode.LAST_DIMENSION;
             if (dimension.has("respawn_mode")) respawnMode = RespawnMode.byName(GsonHelper.getAsString(dimension, "respawn_mode"));
             if (dimension.has("keep_loaded")) keepLoaded = SpawnChunkLoading.byName(GsonHelper.getAsString(dimension, "keep_loaded"));
         }
