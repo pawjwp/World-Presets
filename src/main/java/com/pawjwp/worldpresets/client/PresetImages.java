@@ -1,13 +1,5 @@
 package com.pawjwp.worldpresets.client;
 
-import com.mojang.blaze3d.platform.NativeImage;
-import com.pawjwp.worldpresets.WorldPresets;
-import com.pawjwp.worldpresets.preset.CreationPreset;
-import com.pawjwp.worldpresets.preset.PresetManager;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.resources.ResourceLocation;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -16,6 +8,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import com.mojang.blaze3d.platform.NativeImage;
+import com.pawjwp.worldpresets.WorldPresets;
+import com.pawjwp.worldpresets.preset.CreationPreset;
+import com.pawjwp.worldpresets.preset.PresetManager;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.resources.ResourceLocation;
 
 // Loads a preset's image at config/worldpresets/presets/_____.png
 // Falls back to a .jpg or .jpeg if no .png is present. If no images are present, a placeholder image is used.

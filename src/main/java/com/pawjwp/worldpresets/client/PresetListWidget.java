@@ -1,12 +1,7 @@
 package com.pawjwp.worldpresets.client;
 
-import java.util.List;
-
-import javax.annotation.Nullable;
-
 import com.pawjwp.worldpresets.preset.CreationPreset;
 import com.pawjwp.worldpresets.preset.PresetManager;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ComponentPath;
 import net.minecraft.client.gui.Font;
@@ -25,6 +20,9 @@ import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
+
+import javax.annotation.Nullable;
+import java.util.List;
 
 /**
  * The preset chooser shown in the create-world screen's Presets tab.
