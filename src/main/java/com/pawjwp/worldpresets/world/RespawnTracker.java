@@ -24,14 +24,12 @@ import javax.annotation.Nullable;
  * The bed only version ignores respawn anchors so the player is less likely to be stranded in the nether.
  */
 @Mod.EventBusSubscriber(modid = WorldPresets.MODID)
-public final class RespawnTracker
-{
+public final class RespawnTracker {
     private static final String LAST_SPAWN = "LastSpawnDimension";
     private static final String LAST_BED = "LastBedDimension";
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onSetSpawn(PlayerSetSpawnEvent event)
-    {
+    public static void onSetSpawn(PlayerSetSpawnEvent event) {
         if (event.isCanceled() || !(event.getEntity() instanceof ServerPlayer player) || event.getNewSpawn() == null) return;
         CompoundTag persisted = player.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
         CompoundTag ours = persisted.getCompound(WorldPresets.MODID);
@@ -50,12 +48,10 @@ public final class RespawnTracker
      * The dimension that a player without a usable spawnpoint will respawn in.
      */
     @Nullable
-    public static ServerLevel resolveRespawnLevel(ServerPlayer player, MinecraftServer server)
-    {
+    public static ServerLevel resolveRespawnLevel(ServerPlayer player, MinecraftServer server) {
         WorldSetupData data = WorldSetupData.get(server);
         if (data == null || data.respawnMode == RespawnMode.VANILLA) return null;
-        ResourceKey<Level> dimension = switch (data.respawnMode)
-        {
+        ResourceKey<Level> dimension = switch (data.respawnMode) {
             case ALWAYS_SPAWN_DIMENSION -> data.spawnDimension;
             case LAST_DIMENSION -> stored(player, LAST_SPAWN, data.spawnDimension);
             case LAST_DIMENSION_NO_ANCHORS -> stored(player, LAST_BED, data.spawnDimension);
@@ -64,8 +60,7 @@ public final class RespawnTracker
         return dimension == null ? null : server.getLevel(dimension);
     }
 
-    private static ResourceKey<Level> stored(ServerPlayer player, String key, ResourceKey<Level> fallback)
-    {
+    private static ResourceKey<Level> stored(ServerPlayer player, String key, ResourceKey<Level> fallback) {
         CompoundTag ours = player.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG).getCompound(WorldPresets.MODID);
         return ours.contains(key)
                 ? ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(ours.getString(key)))

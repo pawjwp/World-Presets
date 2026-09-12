@@ -16,13 +16,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * Injects a preset's pending structure starts as chunks reach the STRUCTURE_STARTS stage.
  */
 @Mixin(ChunkGenerator.class)
-public abstract class ChunkGeneratorMixin
-{
+public abstract class ChunkGeneratorMixin {
     @Inject(method = "createStructures", at = @At("TAIL"))
     private void worldpresets$injectPendingStarts(RegistryAccess registryAccess, ChunkGeneratorStructureState structureState,
                                                   StructureManager structureManager, ChunkAccess chunk,
-                                                  StructureTemplateManager templateManager, CallbackInfo ci)
-    {
+                                                  StructureTemplateManager templateManager, CallbackInfo ci) {
         StructurePlacer.injectPendingStarts(structureManager, chunk);
     }
 }

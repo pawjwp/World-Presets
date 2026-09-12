@@ -13,11 +13,9 @@ import java.util.List;
  * A recreation of vanilla's Climate.SpawnFinder, with an origin point at the chosen coordinate instead of the world center.
  * Finds a suitable climate near that center and returns null if there are no valid targets.
  */
-public final class ClimateSpawnFinder
-{
+public final class ClimateSpawnFinder {
     @Nullable
-    public static BlockPos find(ServerLevel level, int centerX, int centerZ)
-    {
+    public static BlockPos find(ServerLevel level, int centerX, int centerZ) {
         Climate.Sampler sampler = level.getChunkSource().randomState().sampler();
         List<Climate.ParameterPoint> spawnTarget = sampler.spawnTarget();
         if (spawnTarget.isEmpty()) return null;
@@ -30,13 +28,11 @@ public final class ClimateSpawnFinder
 
     /** Searches in a spiral outward from the current best, keeping whichever spot scores lowest. */
     private static Result radialSearch(Climate.Sampler sampler, List<Climate.ParameterPoint> spawnTarget,
-                                       int centerX, int centerZ, Result best, float maxRadius, float step)
-    {
+                                       int centerX, int centerZ, Result best, float maxRadius, float step) {
         float angle = 0.0F;
         float radius = step;
         BlockPos around = best.pos;
-        while (radius <= maxRadius)
-        {
+        while (radius <= maxRadius) {
             int x = around.getX() + (int) (Math.sin(angle) * radius);
             int z = around.getZ() + (int) (Math.cos(angle) * radius);
             Result candidate = score(sampler, spawnTarget, x, z, centerX, centerZ);
@@ -51,8 +47,7 @@ public final class ClimateSpawnFinder
      * Calculates the score for a column including the distance penalty, and climate difference from the spawn target.
      */
     private static Result score(Climate.Sampler sampler, List<Climate.ParameterPoint> spawnTarget,
-                                int x, int z, int centerX, int centerZ)
-    {
+                                int x, int z, int centerX, int centerZ) {
         long dx = x - centerX;
         long dz = z - centerZ;
         long distancePenalty = (long) ((double) Mth.square(10000.0F) * Math.pow((double) (Mth.square(dx) + Mth.square(dz)) / Mth.square(2500.0D), 2.0D));
@@ -60,16 +55,14 @@ public final class ClimateSpawnFinder
         Climate.TargetPoint sampled = sampler.sample(QuartPos.fromBlock(x), 0, QuartPos.fromBlock(z));
         Climate.TargetPoint point = new Climate.TargetPoint(sampled.temperature(), sampled.humidity(), sampled.continentalness(), sampled.erosion(), 0L, sampled.weirdness());
         long climateFitness = Long.MAX_VALUE;
-        for (Climate.ParameterPoint target : spawnTarget)
-        {
+        for (Climate.ParameterPoint target : spawnTarget) {
             climateFitness = Math.min(climateFitness, fitness(target, point));
         }
         return new Result(new BlockPos(x, 0, z), distancePenalty + climateFitness);
     }
 
     /** Recreation of Climate.ParameterPoint.fitness. */
-    private static long fitness(Climate.ParameterPoint p, Climate.TargetPoint t)
-    {
+    private static long fitness(Climate.ParameterPoint p, Climate.TargetPoint t) {
         return Mth.square(p.temperature().distance(t.temperature()))
                 + Mth.square(p.humidity().distance(t.humidity()))
                 + Mth.square(p.continentalness().distance(t.continentalness()))

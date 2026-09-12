@@ -6,13 +6,11 @@ import org.slf4j.Logger;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(WorldPresets.MODID)
-public class WorldPresets
-{
+public class WorldPresets {
     public static final String MODID = "worldpresets";
     public static final Logger LOGGER = LogUtils.getLogger();
 
-    public WorldPresets()
-    {
+    public WorldPresets() {
         // Most behavior will be in @Mod.EventBusSubscriber classes and mixins
     }
 }

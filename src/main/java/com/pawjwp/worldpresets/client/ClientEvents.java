@@ -9,14 +9,11 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = WorldPresets.MODID, value = Dist.CLIENT)
-public final class ClientEvents
-{
+public final class ClientEvents {
     // Reload all presets whenever a player opens the create world screen
     @SubscribeEvent
-    public static void onScreenOpening(ScreenEvent.Opening event)
-    {
-        if (event.getNewScreen() instanceof CreateWorldScreen)
-        {
+    public static void onScreenOpening(ScreenEvent.Opening event) {
+        if (event.getNewScreen() instanceof CreateWorldScreen) {
             PresetManager.reload();
             PresetImages.reload();
         }

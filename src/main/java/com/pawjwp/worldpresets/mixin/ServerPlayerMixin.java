@@ -21,15 +21,13 @@ import javax.annotation.Nullable;
  * Reports the respawn dimension from the world's respawn mode, places new players at the spawn if set to a precise position.
  */
 @Mixin(ServerPlayer.class)
-public abstract class ServerPlayerMixin
-{
+public abstract class ServerPlayerMixin {
     @Shadow
     @Nullable
     private BlockPos respawnPosition;
 
     @Inject(method = "getRespawnDimension", at = @At("HEAD"), cancellable = true)
-    private void worldpresets$respawnDimension(CallbackInfoReturnable<ResourceKey<Level>> cir)
-    {
+    private void worldpresets$respawnDimension(CallbackInfoReturnable<ResourceKey<Level>> cir) {
         if (this.respawnPosition != null) return;
         ServerPlayer self = (ServerPlayer) (Object) this;
         MinecraftServer server = self.getServer();
@@ -43,8 +41,7 @@ public abstract class ServerPlayerMixin
      * Used if a precise placement mode (exact or clear) is set.
      */
     @Inject(method = "fudgeSpawnLocation", at = @At("HEAD"), cancellable = true)
-    private void worldpresets$exactSpawn(ServerLevel level, CallbackInfo ci)
-    {
+    private void worldpresets$exactSpawn(ServerLevel level, CallbackInfo ci) {
         WorldSetupData data = WorldSetupData.get(level.getServer());
         if (data == null || !data.exactSpawn || level.dimension() != data.spawnDimension) return;
         ServerPlayer self = (ServerPlayer) (Object) this;

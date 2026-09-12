@@ -38,8 +38,7 @@ import java.util.function.Predicate;
 
 
 /** Creates a world from a preset's bundled world */
-public final class BundledWorldCreation
-{
+public final class BundledWorldCreation {
     private BundledWorldCreation() {}
 
     /** Runs world creation with a bundled world */
@@ -49,8 +48,7 @@ public final class BundledWorldCreation
         CreationPreset preset,
         @Nullable Path tempDataPackDir,
         Runnable removeTempPacks,
-        @Nullable SelectedGameMode
-        prefillGameMode
+        @Nullable SelectedGameMode prefillGameMode
     ) {
         Minecraft minecraftInstance = Minecraft.getInstance();
         BundledWorld bundledWorld = preset.bundledWorld();
@@ -65,11 +63,9 @@ public final class BundledWorldCreation
 
         // Show a "preparing preset world" screen while loading
         minecraftInstance.forceSetScreen(new GenericDirtMessageScreen(Component.translatable("worldpresets.bundled_world.preparing")));
-        Util.ioPool().execute(() ->
-        {
+        Util.ioPool().execute(() -> {
             LevelStorageSource.LevelStorageAccess folderAccess = null;
-            try
-            {
+            try {
                 folderAccess = minecraftInstance.getLevelSource().createAccess(folderName);
                 Path rootPath = folderAccess.getLevelPath(LevelResource.ROOT);
 
@@ -81,29 +77,21 @@ public final class BundledWorldCreation
                 patchLevelDat(rootPath.resolve("level.dat").toFile(), bundledWorld, worldName, patchGamemode ? gamemode : null, difficulty, allowCheats, gameRules, dataConfig);
 
                 folderAccess.close();
-                minecraftInstance.execute(() ->
-                {
+                minecraftInstance.execute(() -> {
                     removeTempPacks.run();
                     minecraftInstance.createWorldOpenFlows().loadLevel(null, folderName);
                 });
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 WorldPresets.LOGGER.error("Failed to create bundled world {}", bundledWorld.worldDir(), e);
                 // Delete any world files so broken worlds aren't left in the saves folder
-                if (folderAccess != null)
-                {
-                    try
-                    {
+                if (folderAccess != null) {
+                    try {
                         folderAccess.deleteLevel();
-                    }
-                    catch (Exception cleanup)
-                    {
+                    } catch (Exception cleanup) {
                         WorldPresets.LOGGER.error("Failed to remove broken world {}", folderName, cleanup);
                     }
                 }
-                minecraftInstance.execute(() ->
-                {
+                minecraftInstance.execute(() -> {
                     SystemToast.onWorldAccessFailure(minecraftInstance, folderName);
                     minecraftInstance.setScreen(createScreen);
                 });
@@ -112,13 +100,10 @@ public final class BundledWorldCreation
     }
 
     /** Copies every file under source into target, keeping the folder structure and overwriting existing files. */
-    private static void copyTree(Path source, Path target, Predicate<Path> skipped) throws IOException
-    {
-        Files.walkFileTree(source, new SimpleFileVisitor<>()
-        {
+    private static void copyTree(Path source, Path target, Predicate<Path> skipped) throws IOException {
+        Files.walkFileTree(source, new SimpleFileVisitor<>() {
             @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attributes) throws IOException
-            {
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attributes) throws IOException {
                 Path relative = source.relativize(dir);
                 // return if directory is empty or on the skip list
                 if (!relative.toString().isEmpty() && skipped.test(relative)) return FileVisitResult.SKIP_SUBTREE;
@@ -127,8 +112,7 @@ public final class BundledWorldCreation
             }
 
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) throws IOException
-            {
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) throws IOException {
                 Path relativePath = source.relativize(file);
                 // copy if file is not on the skipped list
                 if (!skipped.test(relativePath)) Files.copy(file, target.resolve(relativePath), StandardCopyOption.REPLACE_EXISTING);
@@ -138,8 +122,7 @@ public final class BundledWorldCreation
     }
 
     /** Whether a given file should be copied or skipped */
-    private static boolean skipped(BundledWorld bundledWorld, Path relativePath)
-    {
+    private static boolean skipped(BundledWorld bundledWorld, Path relativePath) {
         String fileName = relativePath.getFileName().toString();
         String folderName = relativePath.getName(0).toString();
         if (
@@ -167,8 +150,9 @@ public final class BundledWorldCreation
     /**
      * Writes the selections from the world creation screen into level.dat
      */
-    private static void patchLevelDat(File file,
-        BundledWorld bundle,
+    private static void patchLevelDat(
+        File file,
+        BundledWorld bundledWorld,
         String name,
         @Nullable SelectedGameMode gameMode,
         Difficulty difficulty,
@@ -181,8 +165,7 @@ public final class BundledWorldCreation
         root.put("Data", data);
 
         data.putString("LevelName", name);
-        if (gameMode != null)
-        {
+        if (gameMode != null) {
             data.putInt("GameType", gameMode.gameType.getId());
             data.putBoolean("hardcore", gameMode == SelectedGameMode.HARDCORE);
         }
@@ -192,17 +175,14 @@ public final class BundledWorldCreation
         data.putBoolean("confirmedExperimentalSettings", true);
         mergeDataPacks(data, dataConfiguration);
 
-        if (bundledWorld.resetPlayerData())
-        {
+        if (bundledWorld.resetPlayerData()) {
             data.remove("Player");
         }
-        if (bundledWorld.resetWorldState())
-        {
+        if (bundledWorld.resetWorldState()) {
             data.putLong("DayTime", 0L);
             for (String key : List.of("raining", "rainTime", "thundering", "thunderTime", "clearWeatherTime",
                     "WanderingTraderId", "WanderingTraderSpawnDelay", "WanderingTraderSpawnChance",
-                    "LastPlayed", "ServerBrands", "WasModded"))
-            {
+                    "LastPlayed", "ServerBrands", "WasModded")) {
                 data.remove(key);
             }
         }
@@ -210,8 +190,7 @@ public final class BundledWorldCreation
     }
 
     /** Merges existing data packs with any selected in the world creation screen */
-    private static void mergeDataPacks(CompoundTag data, WorldDataConfiguration dataConfiguration)
-    {
+    private static void mergeDataPacks(CompoundTag data, WorldDataConfiguration dataConfiguration) {
         CompoundTag dataPacks = data.getCompound("DataPacks");
         data.put("DataPacks", dataPacks);
         Set<String> enabled = stringSet(dataPacks.getList("Enabled", Tag.TAG_STRING));
@@ -227,15 +206,13 @@ public final class BundledWorldCreation
         data.put("enabled_features", stringList(features));
     }
 
-    private static Set<String> stringSet(ListTag list)
-    {
+    private static Set<String> stringSet(ListTag list) {
         Set<String> strings = new LinkedHashSet<>();
         for (Tag tag : list) strings.add(tag.getAsString());
         return strings;
     }
 
-    private static ListTag stringList(Set<String> strings)
-    {
+    private static ListTag stringList(Set<String> strings) {
         ListTag list = new ListTag();
         for (String string : strings) list.add(StringTag.valueOf(string));
         return list;

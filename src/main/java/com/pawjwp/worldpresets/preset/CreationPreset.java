@@ -58,16 +58,14 @@ public record CreationPreset(
         @Nullable BundledWorld bundledWorld
 ) {
 
-    public enum GameMode
-    {
+    public enum GameMode {
         SURVIVAL,
         HARDCORE,
         CREATIVE
     }
 
     /** Respawn behavior when a preset has a custom spawn dimension and the player has no set spawn */
-    public enum RespawnMode
-    {
+    public enum RespawnMode {
         // Respawns go to the overworld
         VANILLA,
         // Respawns go to the last dimension where the player's spawnpoint was set
@@ -77,29 +75,25 @@ public record CreationPreset(
         // Respawns go to the spawn dimension
         ALWAYS_SPAWN_DIMENSION;
 
-        public static RespawnMode byName(String name)
-        {
+        public static RespawnMode byName(String name) {
             return valueOf(name.toUpperCase(Locale.ROOT));
         }
     }
 
     /** Which dimension's spawn chunks stay loaded when a preset has a custom spawn dimension */
-    public enum SpawnChunkLoading
-    {
+    public enum SpawnChunkLoading {
         // Only the spawn dimension's spawn chunks stay loaded
         SPAWN_DIMENSION,
         // Both the spawn dimension's and the overworld's normal spawn chunks stay loaded
         BOTH;
 
-        public static SpawnChunkLoading byName(String name)
-        {
+        public static SpawnChunkLoading byName(String name) {
             return valueOf(name.toUpperCase(Locale.ROOT));
         }
     }
 
     /** How the set spawn position is converted to the world spawn */
-    public enum Placement
-    {
+    public enum Placement {
         // Place the player at the exact set coordinates, even if that is in a wall or mid-air
         EXACT,
         // Place the player at the exact coordinates, clearing a space and adding a floor if needed
@@ -109,46 +103,37 @@ public record CreationPreset(
         // Relocate vanilla's entire spawn climate placement logic around the set coordinate (ignores spawn height)
         FIND_CLIMATE;
 
-        public static Placement byName(String name)
-        {
+        public static Placement byName(String name) {
             return valueOf(name.toUpperCase(Locale.ROOT));
         }
     }
 
     /** World spawn override, based on command-style coordinates. Each axis is either absolute or an offset using a "~". */
-    public record StartPosition(Coord x, Coord y, Coord z, Placement placement)
-    {
-        public record Coord(boolean relative, int value)
-        {
-            public int resolve(int base)
-            {
+    public record StartPosition(Coord x, Coord y, Coord z, Placement placement) {
+        public record Coord(boolean relative, int value) {
+            public int resolve(int base) {
                 return relative ? base + value : value;
             }
         }
 
-        public boolean anyRelative()
-        {
+        public boolean anyRelative() {
             return x.relative() || y.relative() || z.relative();
         }
 
         /** The exact and clear modes place the player at the precise coordinates and skip the imprecision of vanilla's spawns. */
-        public boolean exact()
-        {
+        public boolean exact() {
             return placement == Placement.EXACT || placement == Placement.CLEAR;
         }
 
-        private static Coord parseCoord(String token)
-        {
-            if (token.startsWith("~"))
-            {
+        private static Coord parseCoord(String token) {
+            if (token.startsWith("~")) {
                 String offset = token.substring(1);
                 return new Coord(true, offset.isEmpty() ? 0 : Integer.parseInt(offset));
             }
             return new Coord(false, Integer.parseInt(token));
         }
 
-        public static StartPosition parse(JsonObject json)
-        {
+        public static StartPosition parse(JsonObject json) {
             String[] tokens = GsonHelper.getAsString(json, "position").trim().split("[\\s,]+");
             if (tokens.length != 3) throw new IllegalArgumentException("start_position must be three coordinates \"x y z\", got " + tokens.length);
             Placement placement = json.has("placement") ? Placement.byName(GsonHelper.getAsString(json, "placement")) : Placement.FIND_SAFE;
@@ -160,26 +145,21 @@ public record CreationPreset(
     public record StructureSpec(ResourceLocation structure, int offsetX, int offsetZ) {}
 
     /** A pre-made world that comes bundled with a preset saved to config/worldpresets/worlds */
-    public record BundledWorld(Path worldDir, boolean resetPlayerData, boolean resetWorldState, Prefill prefill)
-    {
+    public record BundledWorld(Path worldDir, boolean resetPlayerData, boolean resetWorldState, Prefill prefill) {
         /** Values read from the bundled world's level.dat to prefill the tabs in the world creation screen */
         public record Prefill(@Nullable String name, @Nullable Integer gameType, boolean hardcore, @Nullable Difficulty difficulty,
                               @Nullable Boolean allowCommands, CompoundTag gameRules, @Nullable Long seed) {}
 
         /** Parses and validates the bundled world, throwing errors if invalid. */
-        public static BundledWorld parse(JsonObject json)
-        {
+        public static BundledWorld parse(JsonObject json) {
             String worldFolder = GsonHelper.getAsString(json, "folder");
             Path worldsDir = PresetManager.worldsDirectory().resolve(worldFolder);
             if (!Files.isDirectory(worldsDir)) throw new IllegalArgumentException("Bundled world folder not found: " + worldsDir);
             if (!Files.isRegularFile(worldsDir.resolve("level.dat"))) throw new IllegalArgumentException("Bundled world '" + worldFolder + "' has no level.dat");
             CompoundTag data;
-            try
-            {
+            try {
                 data = NbtIo.readCompressed(worldsDir.resolve("level.dat").toFile()).getCompound("Data");
-            }
-            catch (IOException e)
-            {
+            } catch (IOException e) {
                 throw new IllegalArgumentException("Bundled world '" + worldFolder + "' has an invalid level.dat", e);
             }
             // Reject worlds created on a newer version
@@ -202,8 +182,7 @@ public record CreationPreset(
         }
     }
 
-    public static CreationPreset parse(String id, JsonObject json)
-    {
+    public static CreationPreset parse(String id, JsonObject json) {
         Component title = text(json, "title", "translate_title", id);
         Component description = text(json, "description", "translate_description", "");
         boolean hidden = GsonHelper.getAsBoolean(json, "hidden", false);
@@ -215,13 +194,11 @@ public record CreationPreset(
         Boolean allowCheats = null;
         ResourceLocation worldType = null;
         String seed = null;
-        if (json.has("world"))
-        {
+        if (json.has("world")) {
             JsonObject world = GsonHelper.getAsJsonObject(json, "world");
             if (world.has("name")) worldName = GsonHelper.getAsString(world, "name");
             if (world.has("gamemode")) gameMode = GameMode.valueOf(GsonHelper.getAsString(world, "gamemode").toUpperCase(Locale.ROOT));
-            if (world.has("difficulty"))
-            {
+            if (world.has("difficulty")) {
                 difficulty = Difficulty.byName(GsonHelper.getAsString(world, "difficulty"));
                 if (difficulty == null) throw new IllegalArgumentException("Unknown difficulty: " + GsonHelper.getAsString(world, "difficulty"));
             }
@@ -231,10 +208,8 @@ public record CreationPreset(
         }
 
         Map<String, String> gameRules = new LinkedHashMap<>();
-        if (json.has("gamerules"))
-        {
-            for (var entry : GsonHelper.getAsJsonObject(json, "gamerules").entrySet())
-            {
+        if (json.has("gamerules")) {
+            for (var entry : GsonHelper.getAsJsonObject(json, "gamerules").entrySet()) {
                 gameRules.put(entry.getKey(), entry.getValue().getAsString());
             }
         }
@@ -243,8 +218,7 @@ public record CreationPreset(
         // Default to vanilla spawning unless a spawn dimension is set
         RespawnMode respawnMode = RespawnMode.VANILLA;
         SpawnChunkLoading keepLoaded = SpawnChunkLoading.SPAWN_DIMENSION;
-        if (json.has("dimension"))
-        {
+        if (json.has("dimension")) {
             JsonObject dimension = GsonHelper.getAsJsonObject(json, "dimension");
             // The dimension id defaults to the overworld so respawn_mode can be set on its own
             spawnDimension = dimension.has("dimension_id") ? ResourceLocation.parse(GsonHelper.getAsString(dimension, "dimension_id")) : Level.OVERWORLD.location();
@@ -257,13 +231,11 @@ public record CreationPreset(
         StartPosition startPosition = json.has("start_position") ? StartPosition.parse(GsonHelper.getAsJsonObject(json, "start_position")) : null;
 
         List<StructureSpec> structures = new ArrayList<>();
-        for (JsonElement element : GsonHelper.getAsJsonArray(json, "structures", new JsonArray()))
-        {
+        for (JsonElement element : GsonHelper.getAsJsonArray(json, "structures", new JsonArray())) {
             JsonObject entry = GsonHelper.convertToJsonObject(element, "structure entry");
             int offsetX = 0;
             int offsetZ = 0;
-            if (entry.has("offset"))
-            {
+            if (entry.has("offset")) {
                 JsonArray offset = GsonHelper.getAsJsonArray(entry, "offset");
                 if (offset.size() != 2) throw new IllegalArgumentException("Structure offset must be two numbers [x, z], got " + offset);
                 offsetX = offset.get(0).getAsInt();
@@ -273,8 +245,7 @@ public record CreationPreset(
         }
 
         BundledWorld bundledWorld = json.has("bundled_world") ? BundledWorld.parse(GsonHelper.getAsJsonObject(json, "bundled_world")) : null;
-        if (bundledWorld != null && (worldType != null || seed != null || spawnDimension != null || startPosition != null || !structures.isEmpty()))
-        {
+        if (bundledWorld != null && (worldType != null || seed != null || spawnDimension != null || startPosition != null || !structures.isEmpty())) {
             WorldPresets.LOGGER.warn("Preset {} includes a bundled world; its world_type, seed, dimension, start_position, and structures settings are ignored", id);
             worldType = null;
             seed = null;
@@ -293,8 +264,7 @@ public record CreationPreset(
         );
     }
 
-    private static Component text(JsonObject json, String key, String translateKey, String fallback)
-    {
+    private static Component text(JsonObject json, String key, String translateKey, String fallback) {
         String value = GsonHelper.getAsString(json, key, fallback);
         return GsonHelper.getAsBoolean(json, translateKey, false) ? Component.translatable(value) : Component.literal(value);
     }

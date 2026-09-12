@@ -6,8 +6,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(ServerPlayer.class)
-public interface ServerPlayerAccessor
-{
+public interface ServerPlayerAccessor {
     @Invoker("fudgeSpawnLocation")
     void worldpresets$fudgeSpawnLocation(ServerLevel level);
 }

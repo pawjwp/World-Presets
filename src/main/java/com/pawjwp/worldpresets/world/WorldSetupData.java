@@ -17,8 +17,7 @@ import javax.annotation.Nullable;
 /**
  * Saves a preset's spawn dimension override with the world, so respawns/joins continue working.
  */
-public class WorldSetupData extends SavedData
-{
+public class WorldSetupData extends SavedData {
     private static final String ID = "worldpresets_setup";
 
     public final ResourceKey<Level> spawnDimension;
@@ -29,8 +28,7 @@ public class WorldSetupData extends SavedData
     /** True when the start_position uses exact or clear placement, so new players skip vanilla's surface fudge. */
     public final boolean exactSpawn;
 
-    private WorldSetupData(ResourceKey<Level> spawnDimension, RespawnMode respawnMode, @Nullable BlockPos overworldSpawn, boolean exactSpawn)
-    {
+    private WorldSetupData(ResourceKey<Level> spawnDimension, RespawnMode respawnMode, @Nullable BlockPos overworldSpawn, boolean exactSpawn) {
         this.spawnDimension = spawnDimension;
         this.respawnMode = respawnMode;
         this.overworldSpawn = overworldSpawn;
@@ -38,27 +36,21 @@ public class WorldSetupData extends SavedData
     }
 
     @Nullable
-    public static WorldSetupData get(MinecraftServer server)
-    {
+    public static WorldSetupData get(MinecraftServer server) {
         return server.overworld().getDataStorage().get(WorldSetupData::load, ID);
     }
 
-    public static void create(MinecraftServer server, ResourceKey<Level> spawnDimension, RespawnMode respawnMode, @Nullable BlockPos overworldSpawn, boolean exactSpawn)
-    {
+    public static void create(MinecraftServer server, ResourceKey<Level> spawnDimension, RespawnMode respawnMode, @Nullable BlockPos overworldSpawn, boolean exactSpawn) {
         WorldSetupData data = new WorldSetupData(spawnDimension, respawnMode, overworldSpawn, exactSpawn);
         data.setDirty();
         server.overworld().getDataStorage().set(ID, data);
     }
 
-    private static WorldSetupData load(CompoundTag tag)
-    {
+    private static WorldSetupData load(CompoundTag tag) {
         RespawnMode mode;
-        try
-        {
+        try {
             mode = RespawnMode.byName(tag.getString("RespawnMode"));
-        }
-        catch (IllegalArgumentException e)
-        {
+        } catch (IllegalArgumentException e) {
             WorldPresets.LOGGER.error("Unknown respawn mode '{}' in saved world data, using {}", tag.getString("RespawnMode"), RespawnMode.LAST_DIMENSION);
             mode = RespawnMode.LAST_DIMENSION;
         }
@@ -67,8 +59,7 @@ public class WorldSetupData extends SavedData
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag)
-    {
+    public CompoundTag save(CompoundTag tag) {
         tag.putString("SpawnDimension", this.spawnDimension.location().toString());
         tag.putString("RespawnMode", this.respawnMode.name().toLowerCase(java.util.Locale.ROOT));
         if (this.overworldSpawn != null) tag.put("OverworldSpawn", NbtUtils.writeBlockPos(this.overworldSpawn));

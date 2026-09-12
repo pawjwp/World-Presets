@@ -30,24 +30,20 @@ import java.util.concurrent.ConcurrentHashMap;
  * After that, they are passed to ChunkGenerator's createStructures as the chunks are force-generated.
  * Everything else like terrain adaptation works like it does in vanilla.
  */
-public final class StructurePlacer
-{
+public final class StructurePlacer {
     /** An assembled structure starts in a pending state until claimed by chunk generation. */
     private static final Map<ResourceKey<Level>, Map<Long, List<StructureStart>>> PENDING = new ConcurrentHashMap<>();
 
-    public static void placeAll(ServerLevel level, List<CreationPreset.StructureSpec> specs, BlockPos anchor)
-    {
+    public static void placeAll(ServerLevel level, List<CreationPreset.StructureSpec> specs, BlockPos anchor) {
         if (specs.isEmpty()) return;
         Registry<Structure> registry = level.registryAccess().registryOrThrow(Registries.STRUCTURE);
         ChunkGenerator generator = level.getChunkSource().getGenerator();
 
         Map<Long, List<StructureStart>> pending = new ConcurrentHashMap<>();
         List<StructureStart> starts = new ArrayList<>();
-        for (CreationPreset.StructureSpec spec : specs)
-        {
+        for (CreationPreset.StructureSpec spec : specs) {
             var holder = registry.getHolder(ResourceKey.create(Registries.STRUCTURE, spec.structure()));
-            if (holder.isEmpty())
-            {
+            if (holder.isEmpty()) {
                 WorldPresets.LOGGER.error("Unknown starting structure {}, skipping generation", spec.structure());
                 continue;
             }
@@ -55,8 +51,7 @@ public final class StructurePlacer
             StructureStart start = holder.get().value().generate(level.registryAccess(), generator, generator.getBiomeSource(),
                     level.getChunkSource().randomState(), level.getStructureManager(), level.getSeed(),
                     chunkPos, 0, level, biome -> true);
-            if (!start.isValid())
-            {
+            if (!start.isValid()) {
                 WorldPresets.LOGGER.error("Starting structure {} failed to generate a valid start at {}", spec.structure(), chunkPos.getWorldPosition());
                 continue;
             }
@@ -66,28 +61,23 @@ public final class StructurePlacer
         if (starts.isEmpty()) return;
 
         PENDING.put(level.dimension(), pending);
-        try
-        {
+        try {
             // Generate chunks to let ChunkGeneratorMixin use the starts in the STRUCTURE_STARTS stage
-            for (StructureStart start : starts)
-            {
+            for (StructureStart start : starts) {
                 BoundingBox box = start.getBoundingBox();
                 ChunkPos min = new ChunkPos(SectionPos.blockToSectionCoord(box.minX()), SectionPos.blockToSectionCoord(box.minZ()));
                 ChunkPos max = new ChunkPos(SectionPos.blockToSectionCoord(box.maxX()), SectionPos.blockToSectionCoord(box.maxZ()));
                 ChunkPos.rangeClosed(min, max).forEach(chunkPos -> level.getChunk(chunkPos.x, chunkPos.z));
                 WorldPresets.LOGGER.info("Generated starting structure {} at {}", start.getStructure(), start.getChunkPos().getWorldPosition());
             }
-        }
-        finally
-        {
+        } finally {
             // Clear the pending preset's starts to avoid lingering into other worlds
             PENDING.remove(level.dimension());
         }
     }
 
     /** Passes this chunk's pending structure starts to its structure manager. */
-    public static void injectPendingStarts(StructureManager structureManager, ChunkAccess chunk)
-    {
+    public static void injectPendingStarts(StructureManager structureManager, ChunkAccess chunk) {
         if (PENDING.isEmpty()) return;
         if (!(((StructureManagerAccessor) structureManager).worldpresets$getLevel() instanceof WorldGenLevel level)) return;
         Map<Long, List<StructureStart>> pending = PENDING.get(level.getLevel().dimension());
@@ -95,8 +85,7 @@ public final class StructurePlacer
         List<StructureStart> starts = pending.remove(chunk.getPos().toLong());
         if (starts == null) return;
         SectionPos section = SectionPos.bottomOf(chunk);
-        for (StructureStart start : starts)
-        {
+        for (StructureStart start : starts) {
             structureManager.setStartForStructure(section, start.getStructure(), start, chunk);
         }
     }

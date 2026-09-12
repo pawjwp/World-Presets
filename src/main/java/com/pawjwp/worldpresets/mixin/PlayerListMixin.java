@@ -24,8 +24,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(PlayerList.class)
-public abstract class PlayerListMixin
-{
+public abstract class PlayerListMixin {
     @Shadow
     @Final
     private MinecraftServer server;
@@ -40,8 +39,7 @@ public abstract class PlayerListMixin
      * Detects whether the placed player is new by checking if the player's compoundtag is null.
      */
     @ModifyVariable(method = "placeNewPlayer", at = @At("STORE"), ordinal = 0)
-    private CompoundTag worldpresets$captureNewPlayer(CompoundTag compoundtag)
-    {
+    private CompoundTag worldpresets$captureNewPlayer(CompoundTag compoundtag) {
         this.worldpresets$newPlayer = compoundtag == null;
         return compoundtag;
     }
@@ -50,8 +48,7 @@ public abstract class PlayerListMixin
      * Places a new player in the preset's spawn dimension instead of the overworld.
      */
     @ModifyVariable(method = "placeNewPlayer", at = @At("STORE"), ordinal = 0)
-    private ResourceKey<Level> worldpresets$newPlayerDimension(ResourceKey<Level> dimension)
-    {
+    private ResourceKey<Level> worldpresets$newPlayerDimension(ResourceKey<Level> dimension) {
         this.worldpresets$newPlayerRedirected = false;
         if (!this.worldpresets$newPlayer) return dimension;
         WorldSetupData data = WorldSetupData.get(this.server);
@@ -65,10 +62,8 @@ public abstract class PlayerListMixin
      */
     @Inject(method = "placeNewPlayer",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;setServerLevel(Lnet/minecraft/server/level/ServerLevel;)V", shift = At.Shift.AFTER))
-    private void worldpresets$repositionNewPlayer(Connection connection, ServerPlayer player, CallbackInfo ci)
-    {
-        if (this.worldpresets$newPlayerRedirected)
-        {
+    private void worldpresets$repositionNewPlayer(Connection connection, ServerPlayer player, CallbackInfo ci) {
+        if (this.worldpresets$newPlayerRedirected) {
             this.worldpresets$newPlayerRedirected = false;
             worldpresets$loadSpawnChunk(player.serverLevel());
             ((ServerPlayerAccessor) player).worldpresets$fudgeSpawnLocation(player.serverLevel());
@@ -80,8 +75,7 @@ public abstract class PlayerListMixin
      */
     @WrapOperation(method = "respawn",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;overworld()Lnet/minecraft/server/level/ServerLevel;"))
-    private ServerLevel worldpresets$respawnFallback(MinecraftServer server, Operation<ServerLevel> original, ServerPlayer player, boolean keepEverything)
-    {
+    private ServerLevel worldpresets$respawnFallback(MinecraftServer server, Operation<ServerLevel> original, ServerPlayer player, boolean keepEverything) {
         ServerLevel level = RespawnTracker.resolveRespawnLevel(player, server);
         if (level == null) return original.call(server);
         worldpresets$loadSpawnChunk(level);
@@ -92,8 +86,7 @@ public abstract class PlayerListMixin
      * Loads the chunk at this dimension's spawnpoint.
      */
     @Unique
-    private static void worldpresets$loadSpawnChunk(ServerLevel level)
-    {
+    private static void worldpresets$loadSpawnChunk(ServerLevel level) {
         BlockPos spawn = level.getSharedSpawnPos();
         level.getChunk(SectionPos.blockToSectionCoord(spawn.getX()), SectionPos.blockToSectionCoord(spawn.getZ()));
     }

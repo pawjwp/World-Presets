@@ -6,8 +6,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(StructureManager.class)
-public interface StructureManagerAccessor
-{
+public interface StructureManagerAccessor {
     @Accessor("level")
     LevelAccessor worldpresets$getLevel();
 }
