@@ -20,7 +20,7 @@ import net.minecraftforge.fml.common.Mod;
 import javax.annotation.Nullable;
 
 /**
- * Saves the dimension each player's spawn point was last set in to Forge's persistent data.
+ * Saves the dimension each player's spawnpoint was last set in to Forge's persistent data.
  * The bed only version ignores respawn anchors so the player is less likely to be stranded in the nether.
  */
 @Mod.EventBusSubscriber(modid = WorldPresets.MODID)

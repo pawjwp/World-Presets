@@ -181,15 +181,15 @@ public class PresetListWidget extends AbstractWidget implements ContainerEventHa
 
         @Override
         protected int getMaxPosition() {
-            // Extends the scroll range by the MARGIN minus the ROW_GAP which is already included
+            // Extends the scroll range by the MARGIN minus the ROW_GAP which is already included.
             return super.getMaxPosition() + (MARGIN - ROW_GAP);
         }
 
         @Override
         protected void renderSelection(GuiGraphics graphics, int top, int rowWidth, int rowHeight, int outer,
                                        int inner) {
-            // Draws the selection box outside the image on all four sides
-            // SELECT_PAD determines the pixel distance from the inner content (including the 1px outline of the selection box)
+            // Draws the selection box outside the image on all four sides.
+            // SELECT_PAD determines the pixel distance from the inner content (including the 1px outline of the selection box).
             int selBottom = top + IMAGE_HEIGHT + 2 * SELECT_PAD;
             int left = this.x0 + (this.width - rowWidth) / 2;
             int right = left + rowWidth;
@@ -197,8 +197,8 @@ public class PresetListWidget extends AbstractWidget implements ContainerEventHa
             graphics.fill(left + 1, top + 1, right - 1, selBottom - 1, inner);
         }
 
-        // Restores the scroll position and focus saved when a preset was applied
-        // Only used with apply(), window changes don't save/restore
+        // Restores the scroll position and focus saved when a preset was applied.
+        // Only used with apply(), window changes don't save/restore.
         void restoreAfterApply(PresetListWidget wrapper) {
             if (!((PresetScreenAccess) this.screen).worldpresets$consumeRestore()) return;
             this.setScrollAmount(((PresetScreenAccess) this.screen).worldpresets$listScroll());
@@ -275,7 +275,7 @@ public class PresetListWidget extends AbstractWidget implements ContainerEventHa
             }
 
             private FormattedCharSequence truncate(Component text, int maxWidth) {
-                // Forge's ellipsize appends "..." only when the text is too wide, and guards the case where "..." alone is wider than maxWidth.
+                // Forge's ellipsize adds "..." when the text is too wide.
                 return Language.getInstance().getVisualOrder(this.font.ellipsize(text, maxWidth));
             }
 

@@ -18,8 +18,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
 
-// Loads a preset's image at config/worldpresets/presets/_____.png
-// Falls back to a .jpg or .jpeg if no .png is present. If no images are present, a placeholder image is used.
+
+/**
+ * Loads a preset's image at config/worldpresets/presets/_____.png.
+ * Falls back to a .jpg or .jpeg if no .png is present.
+ * If no images are present, a placeholder image is used.
+ */
 public final class PresetImages
 {
     public record Image(ResourceLocation texture, int width, int height) {}

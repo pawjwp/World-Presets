@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 /**
- * Generates the starting region in the preset's spawn dimension instead of the overworld
+ * Generates the starting region in the preset's spawn dimension instead of the overworld.
  */
 @Mixin(MinecraftServer.class)
 public abstract class MinecraftServerMixin

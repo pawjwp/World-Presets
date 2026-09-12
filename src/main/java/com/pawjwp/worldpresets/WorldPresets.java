@@ -8,9 +8,7 @@ import org.slf4j.Logger;
 @Mod(WorldPresets.MODID)
 public class WorldPresets
 {
-    // Define mod id in a common place for everything to reference
     public static final String MODID = "worldpresets";
-    // Directly reference a slf4j logger
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public WorldPresets()

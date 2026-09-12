@@ -10,7 +10,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 /**
- * A recreation of Vanilla's Climate.SpawnFinder, with an origin point at the chosen coordinate instead of the world center.
+ * A recreation of vanilla's Climate.SpawnFinder, with an origin point at the chosen coordinate instead of the world center.
  * Finds a suitable climate near that center and returns null if there are no valid targets.
  */
 public final class ClimateSpawnFinder
@@ -48,7 +48,7 @@ public final class ClimateSpawnFinder
     }
 
     /**
-     * Calculates the score for a column including the distance penalty, amd climate difference from the spawn target.
+     * Calculates the score for a column including the distance penalty, and climate difference from the spawn target.
      */
     private static Result score(Climate.Sampler sampler, List<Climate.ParameterPoint> spawnTarget,
                                 int x, int z, int centerX, int centerZ)

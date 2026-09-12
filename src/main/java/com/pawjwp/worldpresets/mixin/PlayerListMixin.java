@@ -89,7 +89,7 @@ public abstract class PlayerListMixin
     }
 
     /**
-     * Loads the chunk at this dimension's spawn point
+     * Loads the chunk at this dimension's spawnpoint.
      */
     @Unique
     private static void worldpresets$loadSpawnChunk(ServerLevel level)

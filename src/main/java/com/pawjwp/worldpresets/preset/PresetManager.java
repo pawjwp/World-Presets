@@ -31,7 +31,7 @@ public final class PresetManager
         return FMLPaths.CONFIGDIR.get().resolve(WorldPresets.MODID).resolve("worlds");
     }
 
-    // Visible presets, sorted
+    /** Visible presets, sorted */
     public static List<CreationPreset> getPresets()
     {
         return presets;
@@ -137,7 +137,7 @@ public final class PresetManager
                     keep_loaded: "spawn_dimension"
                 },
 
-                // Overrides the world spawn point.
+                // Overrides the world spawn location.
                 start_position: {
                     // Coordinates structured like a /tp command, separated by spaces.
                     // Plain numbers are absolute, relative coordinates are denoted with a tilde (~)
@@ -153,9 +153,9 @@ public final class PresetManager
 
                 // Structures to generate upon creating the world.
                 // Goes through the whole vanilla structure generation procedure including terrain adaptation and jigsaw placement.
-                // An offset can be set [x, z] blocks away from the world spawn point.
+                // An offset can be set [x, z] blocks away from the world spawn location.
                 structures: [
-                    { structure: "minecraft:village_plains", offset: [-64, -176]  },
+                    { structure: "minecraft:village_plains", offset: [-64, -176] },
                     { structure: "minecraft:pillager_outpost", offset: [-128, -64] }
                 ]
             }

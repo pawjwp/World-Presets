@@ -39,8 +39,8 @@ public abstract class ServerPlayerMixin
     }
 
     /**
-     * Places a new player at the precise world spawn, skipping the vanilla spawn radius
-     * Used if a precise placement mode (excat or clear) is set
+     * Places a new player at the precise world spawn, skipping the vanilla spawn radius.
+     * Used if a precise placement mode (exact or clear) is set.
      */
     @Inject(method = "fudgeSpawnLocation", at = @At("HEAD"), cancellable = true)
     private void worldpresets$exactSpawn(ServerLevel level, CallbackInfo ci)

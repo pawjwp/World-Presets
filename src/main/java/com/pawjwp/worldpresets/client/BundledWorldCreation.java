@@ -60,11 +60,11 @@ public final class BundledWorldCreation
         boolean patchGamemode = prefillGameMode == null || gamemode != prefillGameMode;
         Difficulty difficulty = uiState.getDifficulty();
         boolean allowCheats = uiState.isAllowCheats();
-        CompoundTag gamerules = uiState.getGameRules().createTag();
+        CompoundTag gameRules = uiState.getGameRules().createTag();
         WorldDataConfiguration dataConfig = uiState.getSettings().dataConfiguration();
 
         // Show a "preparing preset world" screen while loading
-        minecraftInstance.forceSetScreen(new GenericDirtMessageScreen(Component.translatable("worldpresets.bundled.preparing")));
+        minecraftInstance.forceSetScreen(new GenericDirtMessageScreen(Component.translatable("worldpresets.bundled_world.preparing")));
         Util.ioPool().execute(() ->
         {
             LevelStorageSource.LevelStorageAccess folderAccess = null;
@@ -78,7 +78,7 @@ public final class BundledWorldCreation
                 // copy data packs
                 if (tempDataPackDir != null) copyTree(tempDataPackDir, rootPath.resolve("datapacks"), relative -> false);
                 // modify level.dat with selected options
-                patchLevelDat(rootPath.resolve("level.dat").toFile(), bundledWorld, worldName, patchGamemode ? gamemode : null, difficulty, allowCheats, gamerules, dataConfig);
+                patchLevelDat(rootPath.resolve("level.dat").toFile(), bundledWorld, worldName, patchGamemode ? gamemode : null, difficulty, allowCheats, gameRules, dataConfig);
 
                 folderAccess.close();
                 minecraftInstance.execute(() ->
@@ -138,7 +138,7 @@ public final class BundledWorldCreation
     }
 
     /** Whether a given file should be copied or skipped */
-    private static boolean skipped(BundledWorld bundle, Path relativePath)
+    private static boolean skipped(BundledWorld bundledWorld, Path relativePath)
     {
         String fileName = relativePath.getFileName().toString();
         String folderName = relativePath.getName(0).toString();
@@ -148,7 +148,7 @@ public final class BundledWorldCreation
             fileName.equals("level.dat_old") ||
 
             // All player data folders
-            bundle.resetPlayerData() && (
+            bundledWorld.resetPlayerData() && (
                 folderName.equals("playerdata") ||
                 folderName.equals("advancements") ||
                 folderName.equals("stats") ||
@@ -156,7 +156,7 @@ public final class BundledWorldCreation
             ) ||
             
             // World state folders
-            bundle.resetWorldState() && (
+            bundledWorld.resetWorldState() && (
                 fileName.equals("raids.dat") ||
                 fileName.equals("raids_end.dat")
             )
@@ -192,11 +192,11 @@ public final class BundledWorldCreation
         data.putBoolean("confirmedExperimentalSettings", true);
         mergeDataPacks(data, dataConfiguration);
 
-        if (bundle.resetPlayerData())
+        if (bundledWorld.resetPlayerData())
         {
             data.remove("Player");
         }
-        if (bundle.resetWorldState())
+        if (bundledWorld.resetWorldState())
         {
             data.putLong("DayTime", 0L);
             for (String key : List.of("raining", "rainTime", "thundering", "thunderTime", "clearWeatherTime",

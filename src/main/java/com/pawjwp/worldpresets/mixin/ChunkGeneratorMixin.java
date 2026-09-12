@@ -20,8 +20,8 @@ public abstract class ChunkGeneratorMixin
 {
     @Inject(method = "createStructures", at = @At("TAIL"))
     private void worldpresets$injectPendingStarts(RegistryAccess registryAccess, ChunkGeneratorStructureState structureState,
-                                                   StructureManager structureManager, ChunkAccess chunk,
-                                                   StructureTemplateManager templateManager, CallbackInfo ci)
+                                                  StructureManager structureManager, ChunkAccess chunk,
+                                                  StructureTemplateManager templateManager, CallbackInfo ci)
     {
         StructurePlacer.injectPendingStarts(structureManager, chunk);
     }

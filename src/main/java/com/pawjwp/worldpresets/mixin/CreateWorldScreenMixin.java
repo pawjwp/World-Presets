@@ -91,7 +91,7 @@ public abstract class CreateWorldScreenMixin extends Screen implements PresetScr
         PendingWorldSetup.set(preset);
     }
 
-    /** Adds the Presets tab to the start of the Create World screen (when a valid presets is registered). */
+    /** Adds the Presets tab to the start of the Create World screen (when a valid preset is registered). */
     @ModifyArg(method = "init",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/tabs/TabNavigationBar$Builder;addTabs([Lnet/minecraft/client/gui/components/tabs/Tab;)Lnet/minecraft/client/gui/components/tabs/TabNavigationBar$Builder;"))
     private Tab[] worldpresets$addPresetsTab(Tab[] tabs)
@@ -135,7 +135,7 @@ public abstract class CreateWorldScreenMixin extends Screen implements PresetScr
         if (preset.bundledWorld() != null)
         {
             this.worldpresets$prefillFromBundledWorld(preset.bundledWorld().prefill());
-            baseGamerules = preset.bundledWorld().prefill().gameRules().copy();
+            baseGameRules = preset.bundledWorld().prefill().gameRules().copy();
         }
         if (preset.worldName() != null) this.uiState.setName(preset.worldName());
         if (preset.gameMode() != null) this.uiState.setGameMode(switch (preset.gameMode())
@@ -148,7 +148,7 @@ public abstract class CreateWorldScreenMixin extends Screen implements PresetScr
         if (preset.allowCheats() != null) this.uiState.setAllowCheats(preset.allowCheats());
         if (preset.seed() != null) this.uiState.setSeed(preset.seed());
         if (preset.worldType() != null) this.worldpresets$applyWorldType(preset.worldType());
-        if (!preset.gameRules().isEmpty() || !baseGamerules.isEmpty()) this.uiState.setGameRules(worldpresets$buildGameRules(preset, baseGamerules));
+        if (!preset.gameRules().isEmpty() || !baseGameRules.isEmpty()) this.uiState.setGameRules(worldpresets$buildGameRules(preset, baseGameRules));
         // Gamemodes that can't be displayed will be applied as long as the selection is not changed in the UI
         if (preset.bundledWorld() != null && preset.gameMode() == null) this.worldpresets$prefillGameMode = this.uiState.getGameMode();
         // Rebuilds all widgets
@@ -241,7 +241,7 @@ public abstract class CreateWorldScreenMixin extends Screen implements PresetScr
         return known;
     }
 
-    /** Vanilla default game rules with overrides applied from the preset or bundled world. */
+    /** Vanilla default gamerules with overrides applied from the preset or bundled world. */
     @Unique
     private static GameRules worldpresets$buildGameRules(CreationPreset preset, CompoundTag tag)
     {

@@ -45,7 +45,7 @@ public final class WorldSetupEvents
     private static CreationPreset deferredPreset;
 
     /**
-     * Places the preset's structures at the spawn point before vanilla generates it.
+     * Places the preset's structures at spawn before vanilla generates the area.
      * Defers to onLevelLoad if the preset uses a spawn dimension other than the overworld.
      * Fires once when the new world picks its spawn.
      */
@@ -87,7 +87,7 @@ public final class WorldSetupEvents
     }
 
     /**
-     * Places the world's spawn point and structures in the preset's spawn dimension once it loads.
+     * Places the world's spawnpoint and structures in the preset's spawn dimension once it loads.
      * Runs while the server is creating levels and before the start region generates.
      * MinecraftServerMixin prepares and keeps loaded the chunks around the spawn set here.
      */
@@ -173,7 +173,7 @@ public final class WorldSetupEvents
             default ->
             {
                 BlockPos safe = settleSpawn(level, anchor);
-                // If there are no safe surface nearby, fall back to spawn height
+                // If there are no safe surfaces nearby, fall back to spawn height
                 return safe != null ? safe : spawnHeightAt(level, anchor);
             }
         }
@@ -232,7 +232,7 @@ public final class WorldSetupEvents
         }
     }
 
-    /** The spawn point targeted in this dimension before chunks are loaded. */
+    /** The spawn location targeted in this dimension before chunks are loaded. */
     private static BlockPos spawnAnchor(ServerLevel level)
     {
         ServerChunkCache chunkSource = level.getChunkSource();
@@ -247,7 +247,7 @@ public final class WorldSetupEvents
     }
 
     /**
-     * Recreate's vanilla's chunk spiral to locate safe spawn blocks
+     * Recreates vanilla's chunk spiral to locate safe spawn blocks.
      */
     @Nullable
     private static BlockPos settleSpawn(ServerLevel level, BlockPos anchor)
@@ -279,7 +279,7 @@ public final class WorldSetupEvents
     }
 
     /**
-     * Finds a valid spawn location in a given chunk for dimensions with a ceiling
+     * Finds a valid spawn location in a given chunk for dimensions with a ceiling.
      */
     @Nullable
     private static BlockPos ceilingSpawnPosInChunk(ServerLevel level, ChunkPos chunkPos)

@@ -115,7 +115,7 @@ public record CreationPreset(
         }
     }
 
-    /** World spawn override, built from command-style coordinates. Each axis is either absolute or an offset using a "~". */
+    /** World spawn override, based on command-style coordinates. Each axis is either absolute or an offset using a "~". */
     public record StartPosition(Coord x, Coord y, Coord z, Placement placement)
     {
         public record Coord(boolean relative, int value)
@@ -131,7 +131,7 @@ public record CreationPreset(
             return x.relative() || y.relative() || z.relative();
         }
 
-        /** Exact and clear place the player at the precise coordinates and skip the inprecision of vanilla's spawns. */
+        /** The exact and clear modes place the player at the precise coordinates and skip the imprecision of vanilla's spawns. */
         public boolean exact()
         {
             return placement == Placement.EXACT || placement == Placement.CLEAR;
@@ -162,11 +162,11 @@ public record CreationPreset(
     /** A pre-made world that comes bundled with a preset saved to config/worldpresets/worlds */
     public record BundledWorld(Path worldDir, boolean resetPlayerData, boolean resetWorldState, Prefill prefill)
     {
-        /** Values read from bundled level.dat to prefill the tabs in the world creation screen */
+        /** Values read from the bundled world's level.dat to prefill the tabs in the world creation screen */
         public record Prefill(@Nullable String name, @Nullable Integer gameType, boolean hardcore, @Nullable Difficulty difficulty,
                               @Nullable Boolean allowCommands, CompoundTag gameRules, @Nullable Long seed) {}
 
-        /** Parses and validates the bundled world, throwing errors if invalid */
+        /** Parses and validates the bundled world, throwing errors if invalid. */
         public static BundledWorld parse(JsonObject json)
         {
             String worldFolder = GsonHelper.getAsString(json, "folder");
