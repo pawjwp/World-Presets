@@ -97,16 +97,19 @@ public final class PresetManager {
                     mobGriefing: false
                 },
 
-                // Creates a copy of a pre-made world instead of generating a new one.
-                // To use, place a world save folder into config/worldpresets/worlds and set the "folder" value below to its folder name.
-                // When a bundled world is preset, the world_type, seed, dimension, start_position, and structures configuration is ignored.
-                //bundled_world: {
-                //    folder: "example_world",
-                //    // If true, removes all player data stored with the world (default: true)
-                //    reset_player_data: true,
-                //    // If true, resets world data like time of day, weather, raids, and wandering trader time (default: false)
-                //    reset_world_state: false
-                //},
+                // Overrides the world spawn location.
+                start_position: {
+                    // Coordinates structured like a /tp command, separated by spaces.
+                    // Plain numbers are absolute, relative coordinates are denoted with a tilde (~)
+                    // For example: "49 64 0" will spawn at those exact coordinates, "~49 ~ ~" will shift the normal spawn by 49 blocks instead.
+                    position: "~-128 ~ ~-64",
+                    // Placement mode, determining how the spawn location is placed:
+                    // find_safe:    finds the closest safe spawn position to the specified location (default, always spawns on the surface)
+                    // find_climate: runs vanilla's full climate search around the specified location, which can change the exact position by thousands of blocks
+                    // exact:        the exact coordinates, even if in a wall or mid-air
+                    // clear:        the exact coordinates, clearing space and adding a floor if needed
+                    placement: "find_safe"
+                },
 
                 // Sets the dimension players spawn and respawn in.
                 dimension: {
@@ -123,20 +126,6 @@ public final class PresetManager {
                     keep_loaded: "spawn_dimension"
                 },
 
-                // Overrides the world spawn location.
-                start_position: {
-                    // Coordinates structured like a /tp command, separated by spaces.
-                    // Plain numbers are absolute, relative coordinates are denoted with a tilde (~)
-                    // For example: "49 64 0" will spawn at those exact coordinates, "~49 ~ ~" will shift the normal spawn by 49 blocks instead.
-                    position: "~-128 ~ ~-64",
-                    // Placement mode, determining how the spawn location is placed:
-                    // find_safe:    finds the closest safe spawn position to the specified location (default, always spawns on the surface)
-                    // find_climate: runs vanilla's full climate search around the specified location, which can change the exact position by thousands of blocks
-                    // exact:        the exact coordinates, even if in a wall or mid-air
-                    // clear:        the exact coordinates, clearing space and adding a floor if needed
-                    placement: "find_safe"
-                },
-
                 // Structures to generate upon creating the world.
                 // Goes through the whole vanilla structure generation procedure including terrain adaptation and jigsaw placement.
                 // An offset can be set [x, z] blocks away from the world spawn location.
@@ -144,6 +133,17 @@ public final class PresetManager {
                     { structure: "minecraft:village_plains", offset: [-64, -176] },
                     { structure: "minecraft:pillager_outpost", offset: [-128, -64] }
                 ]
+
+                // Creates a copy of a pre-made world instead of generating a new one.
+                // To use, place a world save folder into config/worldpresets/worlds and set the "folder" value below to its folder name.
+                // When a bundled world is preset, the world_type, seed, dimension, start_position, and structures configuration is ignored.
+                //bundled_world: {
+                //    folder: "example_world",
+                //    // If true, removes all player data stored with the world (default: true)
+                //    reset_player_data: true,
+                //    // If true, resets world data like time of day, weather, raids, and wandering trader time (default: false)
+                //    reset_world_state: false
+                //}
             }
             """;
 }

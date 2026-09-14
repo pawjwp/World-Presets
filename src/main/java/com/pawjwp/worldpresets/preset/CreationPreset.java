@@ -42,7 +42,7 @@ public record CreationPreset(
         @Nullable Difficulty difficulty,
         @Nullable Boolean allowCheats,
 
-        // World tab (not including generate structures/bonus chest toggles)
+        // World tab (not yet including generate structures/bonus chest toggles)
         @Nullable ResourceLocation worldType,
         @Nullable String seed,
 
@@ -50,10 +50,10 @@ public record CreationPreset(
         Map<String, String> gameRules,
 
         // Special settings
+        @Nullable StartPosition startPosition,
         @Nullable ResourceLocation spawnDimension,
         RespawnMode respawnMode,
         SpawnChunkLoading keepLoaded,
-        @Nullable StartPosition startPosition,
         List<StructureSpec> structures,
         @Nullable BundledWorld bundledWorld
 ) {
@@ -214,6 +214,8 @@ public record CreationPreset(
             }
         }
 
+        StartPosition startPosition = json.has("start_position") ? StartPosition.parse(GsonHelper.getAsJsonObject(json, "start_position")) : null;
+
         ResourceLocation spawnDimension = null;
         // Default to vanilla spawning unless a spawn dimension is set
         RespawnMode respawnMode = RespawnMode.VANILLA;
@@ -227,8 +229,6 @@ public record CreationPreset(
             if (dimension.has("respawn_mode")) respawnMode = RespawnMode.byName(GsonHelper.getAsString(dimension, "respawn_mode"));
             if (dimension.has("keep_loaded")) keepLoaded = SpawnChunkLoading.byName(GsonHelper.getAsString(dimension, "keep_loaded"));
         }
-
-        StartPosition startPosition = json.has("start_position") ? StartPosition.parse(GsonHelper.getAsJsonObject(json, "start_position")) : null;
 
         List<StructureSpec> structures = new ArrayList<>();
         for (JsonElement element : GsonHelper.getAsJsonArray(json, "structures", new JsonArray())) {
@@ -249,17 +249,17 @@ public record CreationPreset(
             WorldPresets.LOGGER.warn("Preset {} includes a bundled world; its world_type, seed, dimension, start_position, and structures settings are ignored", id);
             worldType = null;
             seed = null;
-            spawnDimension = null;
             startPosition = null;
+            spawnDimension = null;
             structures = List.of();
         }
 
         return new CreationPreset(
                 id, title, description, hidden, order,               // Meta information
                 worldName, gameMode, difficulty, allowCheats,        // Game tab
-                worldType, seed,                                     // World tab (not including generate structures/bonus chest toggles)
+                worldType, seed,                                     // World tab (not yet including generate structures/bonus chest toggles)
                 Map.copyOf(gameRules),                               // More tab (not including data packs/experiments)
-                spawnDimension, respawnMode, keepLoaded, startPosition, List.copyOf(structures), // Special settings
+                startPosition, spawnDimension, respawnMode, keepLoaded, List.copyOf(structures), // Special settings
                 bundledWorld
         );
     }
